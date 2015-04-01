@@ -10,9 +10,9 @@ In order for JavaScript to display the contents of an Amazon S3 bucket, the buck
 
 ### Setting Bucket Permissions
 
-To share the contents of an Amazon S3 bucket, you will need to create a policy that allows anyone to see and access the contents of your bucket. To do this, you need to update the bucket policy. 
+To share the contents of an Amazon S3 bucket, you will need to create a policy that allows anyone to see and access the contents of your bucket.  
 
-Select your bucket in the buckets panel and click to reveal *Permissions* in the *Properties* pane. Click *Edit Bucket Policy*. The *Bucket Policy Editor* panel will open up with a field where you can enter a policy for your bucket. Enter the following policy, but replace *BUCKET-NAME* with the name of your bucket:
+To do this, select your bucket in the buckets panel and click to reveal *Permissions* in the *Properties* pane. Click *Edit Bucket Policy*. The *Bucket Policy Editor* panel will open up with a field where you can enter a policy for your bucket. Enter the following policy, but replace *BUCKET-NAME* with the name of your bucket:
 
 ```json
 {
