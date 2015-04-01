@@ -146,16 +146,23 @@ if (typeof String.prototype.endsWith != 'function') {
 }
 
 function object2hrefvirt(bucket, object) {
-    return document.location.protocol + '//' + bucket + '.s3.amazonaws.com/' + object;
+    if (AWS.config.region === "us-east-1") {
+        return document.location.protocol + '//' + bucket + '.s3.amazonaws.com/' + object;
+    } else {
+        return document.location.protocol + '//' + bucket + '.s3-' + AWS.config.region + '.amazonaws.com/' + object;
+    }
 }
 
 function object2hrefpath(bucket, object) {
-    return document.location.protocol + "//s3.amazonaws.com/" + bucket + "/" + object;
+    if (AWS.config.region === "us-east-1") {
+        return document.location.protocol + "//s3.amazonaws.com/" + bucket + "/" + object;
+    } else {
+        return document.location.protocol + "//s3-' + AWS.config.region + '.amazonaws.com/" + bucket + "/" + object;
+    }
 }
 
 function isthisdocument(bucket, object) {
-    return object2hrefvirt(bucket, object) === document.location.href ||
-           object2hrefpath(bucket, object) === document.location.href;
+    return object === "index.html";
 }
 
 function isfolder(path) {
@@ -507,22 +514,68 @@ $(document).ready(function(){
     console.log("Document URL: " + document.URL);
     var urls = document.URL.split('/');
     console.log("URL split: " + urls);
-    console.log("URL region: " + urls[urls.length - 3].endsWith('s3.amazonaws.com') ? 'US Standard' : 'other');
+
+    // Using technique from https://gist.github.com/jlong/2428561
+    // to parse the document URL.
+    var parser = document.createElement('a');
+    parser.href = document.URL;
+
+    // URL format is scheme://[user:password@]domain:port/path?query_string#fragment_id
+    // For example: http://example.com:3000/path/?name=abc#topic
+    console.log("protocol: " + parser.protocol); // => "http:"
+    console.log("hostname: " + parser.hostname); // => "example.com"
+    console.log("port    : " + parser.port);     // => "3000"
+    console.log("pathname: " + parser.pathname); // => "/path/"
+    console.log("search  : " + parser.search);   // => "?name=abc"
+    console.log("hash    : " + parser.hash);     // => "#topic"
+    console.log("host    : " + parser.host);     // => "example.com:3000"
 
     // If initial bucket has been hard-coded above then use it, else try to
     // derive the initial bucket from the document URL (useful if index.html was
     // launched directly from within a bucket), else prompt the user.
     if (s3exp_config.Bucket) {
         (s3exp_lister = s3list(s3exp_config, s3draw)).go();
-    } else if (urls[urls.length - 3].endsWith('amazonaws.com')) {
-        console.log("Found amazonaws.com, bucket: " + urls[urls.length - 2]);
-        var s3region = urls[2].split('\.')[0];
-        var region = s3region.substring(3);
-        console.log("s3region: " + s3region);
-        console.log("inferred region: " + region);
-        AWS.config.region = region;
+    } else if (parser.hostname.endsWith('amazonaws.com')) {
+        // Hostname is likely to be in one of the following forms:
+        // - s3.amazonaws.com
+        // - bucket1.s3.amazonaws.com
+        // - s3-us-west-2.amazonaws.com
+        // - bucket2.s3-us-west-2.amazonaws.com
+
+        var bucket;
+        var region;
+        var hostnames = parser.hostname.split('.');
+        var pathnames = parser.pathname.split('/');
+
+        console.log("count of words in hostname=" + hostnames.length);
+        console.log("count of words in pathname=" + pathnames.length);
+
+        // If bucket included in hostname
+        if (hostnames.length == 4) {
+            bucket = hostnames[0];
+            region = hostnames[1];
+            console.log("host bucket=" + bucket);
+            console.log("host region=" + region);
+        } else {
+            bucket = pathnames[1];
+            region = hostnames[0];
+            console.log("path bucket=" + bucket);
+            console.log("path region=" + region);
+        }
+
+        // If we found explicit region, for example s3-us-west-2, then use it
+        // else use the default of US Standard
+        if (region !== 's3') {
+            AWS.config.region = region.substring(3);
+        }
+
+        console.log("AWS region=" + AWS.config.region);
+
+        // Create and initialize S3 object
         s3 = new AWS.S3();
-        s3exp_config = { Bucket: urls[urls.length - 2], Delimiter: '/' };
+        s3exp_config = { Bucket: bucket, Delimiter: '/' };
+
+        // Do initial bucket list
         (s3exp_lister = s3list(s3exp_config, s3draw)).go();
     } else {
         promptForBucketInput();
