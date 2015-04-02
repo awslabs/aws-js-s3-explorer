@@ -46,9 +46,9 @@ There are two URLs you can typically use to access your index.html file:
 1. https://s3.amazonaws.com/BUCKET-NAME/index.html (path-style URL)
 2. https://BUCKET-NAME.s3.amazonaws.com/index.html (virtual-hosted-style URL)
 
-If you decide to access your index.html file via a virtual-hosted-style URL (#2 above) then you should *not* need to enable CORS and you can skip this section.
+If you decide to access your index.html file via a virtual-hosted-style URL (#2 above) then you should *not* need to enable CORS and you can skip this section. We recommend that you use this form of URL.
 
-If you decide to access your index.html file via a path-style URL (#1 above) then you will need to enable CORS. This is because the web page is served up from s3.amazonaws.com but the AWS JavaScript SDK
+If you decide to access your index.html file via a path-style URL (#1 above) then you will need to enable CORS. This is because the web page is served up from s3.amazonaws.com but the AWS JavaScript SDK makes requests to BUCKET-NAME.s3.amazonaws.com.
 
 For security reasons, browsers normally block requests by JavaScript code to access URLs that are unrelated to the source of the code (such as the contents of your bucket), but with CORS, we can configure your bucket to explicitly enable JavaScript to do this.
 
