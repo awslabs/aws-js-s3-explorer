@@ -147,17 +147,17 @@ if (typeof String.prototype.endsWith != 'function') {
 
 function object2hrefvirt(bucket, object) {
     if (AWS.config.region === "us-east-1") {
-        return document.location.protocol + '//' + bucket + '.s3.amazonaws.com/' + object;
+        return document.location.protocol + '//' + bucket + '.s3.amazonaws.com/' + escape(object);
     } else {
-        return document.location.protocol + '//' + bucket + '.s3-' + AWS.config.region + '.amazonaws.com/' + object;
+        return document.location.protocol + '//' + bucket + '.s3-' + AWS.config.region + '.amazonaws.com/' + escape(object);
     }
 }
 
 function object2hrefpath(bucket, object) {
     if (AWS.config.region === "us-east-1") {
-        return document.location.protocol + "//s3.amazonaws.com/" + bucket + "/" + object;
+        return document.location.protocol + "//s3.amazonaws.com/" + bucket + "/" + escape(object);
     } else {
-        return document.location.protocol + "//s3-' + AWS.config.region + '.amazonaws.com/" + bucket + "/" + object;
+        return document.location.protocol + "//s3-' + AWS.config.region + '.amazonaws.com/" + bucket + "/" + escape(object);
     }
 }
 
