@@ -168,6 +168,13 @@ permissions and limitations under the License.
         return Math.round(bytes / Math.pow(1024, ii), 2) + ' ' + sizes[ii];
     }
 
+    // Custom startsWith function for String prototype
+    if (typeof String.prototype.startsWith != 'function') {
+        String.prototype.startsWith = function(str) {
+            return this.indexOf(str) == 0;
+        };
+    }
+
     // Custom endsWith function for String prototype
     if (typeof String.prototype.endsWith != 'function') {
         String.prototype.endsWith = function(str) {
@@ -615,6 +622,13 @@ permissions and limitations under the License.
             // - s3-us-west-2.amazonaws.com
             // - bucket2.s3-us-west-2.amazonaws.com
 
+            // If using static website hosting, the hostname will be of the form:
+            // - bucket.s3-website.eu-central-1.amazonaws.com/
+
+            // The following is also a legal form, but we do not support it, so
+            // you should use s3-eu-central-1 rather than s3.eu-central-1:
+            // - bucket3.s3.eu-central-1.amazonaws.com
+
             var bucket;
             var region;
             var hostnames = parser.hostname.split('.');
@@ -623,26 +637,36 @@ permissions and limitations under the License.
             console.log("count of words in hostname=" + hostnames.length);
             console.log("count of words in pathname=" + pathnames.length);
 
-            // If bucket included in hostname
-            if (hostnames.length == 4) {
-                bucket = hostnames[0];
-                region = hostnames[1];
-                console.log("host bucket=" + bucket);
-                console.log("host region=" + region);
-            } else {
+            console.log("hostnames=" + hostnames);
+            console.log("pathnames=" + pathnames);
+
+            // If bucket prefix not included in hostname
+            if (hostnames[0].match(/^s3-/) || hostnames[0].match(/^s3$/)) {
                 bucket = pathnames[1];
                 region = hostnames[0];
                 console.log("path bucket=" + bucket);
                 console.log("path region=" + region);
+            } else {
+                bucket = hostnames[0];
+                region = hostnames[hostnames.length - 3];
+                console.log("host bucket=" + bucket);
+                console.log("host region=" + region);
             }
 
-            // If we found explicit region, for example s3-us-west-2, then use it
-            // else use the default of US Standard
+            // If we found statically-hosted website prefix or explicit region, for
+            // example s3-us-west-2, then get region else use the default of US Standard
             if (region !== 's3') {
-                AWS.config.region = region.substring(3);
+                if (region.startsWith('s3-website-')) {
+                    AWS.config.region = region.substring(11);
+                } else if (region.startsWith('s3-') || region.startsWith('s3.')) {
+                    AWS.config.region = region.substring(3);
+                } else {
+                    AWS.config.region = region;
+                }
             }
 
             console.log("AWS region=" + AWS.config.region);
+            console.log("S3 bucket=" + bucket);
 
             // Create and initialize S3 object
             s3 = new AWS.S3();
