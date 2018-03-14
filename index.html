@@ -234,6 +234,7 @@ permissions and limitations under the License.
     function folder2breadcrumbs(data) {
         console.log('Bucket: ' + data.params.Bucket);
         console.log('Prefix: ' + data.params.Prefix);
+        window.location.hash = data.params.Prefix;
 
         // The parts array will contain the bucket name followed by all the
         // segments of the prefix, exploded out as separate strings.
@@ -674,6 +675,10 @@ permissions and limitations under the License.
                 Bucket: bucket,
                 Delimiter: '/'
             };
+
+            if(window.location.hash) {
+                s3exp_config.Prefix = window.location.hash.substring(1);
+            }
 
             // Do initial bucket list
             (s3exp_lister = s3list(s3exp_config, s3draw)).go();
