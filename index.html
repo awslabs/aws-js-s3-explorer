@@ -222,6 +222,11 @@ permissions and limitations under the License.
         return parts[parts.length - 2] + '/';
     }
 
+    // Remove hash from document URL
+    function removeHash() {
+        history.pushState("", document.title, window.location.pathname + window.location.search);
+    }
+
     // We are going to generate bucket/folder breadcrumbs. The resulting HTML will
     // look something like this:
     //
@@ -234,6 +239,14 @@ permissions and limitations under the License.
     function folder2breadcrumbs(data) {
         console.log('Bucket: ' + data.params.Bucket);
         console.log('Prefix: ' + data.params.Prefix);
+
+        if (data.params.Prefix && data.params.Prefix.length > 0) {
+            console.log('Set hash: ' + data.params.Prefix);
+            window.location.hash = data.params.Prefix;
+        } else {
+            console.log('Remove hash');
+            removeHash();
+        }
 
         // The parts array will contain the bucket name followed by all the
         // segments of the prefix, exploded out as separate strings.
@@ -674,6 +687,11 @@ permissions and limitations under the License.
                 Bucket: bucket,
                 Delimiter: '/'
             };
+
+            if (window.location.hash) {
+                console.log("Location hash=" + window.location.hash);
+                s3exp_config.Prefix = window.location.hash.substring(1);
+            }
 
             // Do initial bucket list
             (s3exp_lister = s3list(s3exp_config, s3draw)).go();
