@@ -4,6 +4,23 @@ AWS JavaScript S3 Explorer is a JavaScript application that uses AWS's JavaScrip
 
 The index.html file in this bucket contains the entire application. A visitor to the index.html page is prompted to enter the name of an Amazon S3 bucket. Upon adding the bucket name, the contents of the bucket will be rendered on the page.
 
+## Screenshots
+
+Default starting view: 
+![Main screen][main]
+
+[main]: https://raw.githubusercontent.com/awslabs/aws-js-s3-explorer/master/screenshots/explorer-main.png
+
+View all objects in folder: 
+![Folder selected screen][folder]
+
+[folder]: https://raw.githubusercontent.com/awslabs/aws-js-s3-explorer/master/screenshots/explorer-folder.png
+
+View all objects in bucket: 
+![Bucket traversal screen][bucket]
+
+[bucket]: https://raw.githubusercontent.com/awslabs/aws-js-s3-explorer/master/screenshots/explorer-bucket.png
+
 ## Setting Bucket Permissions and Enabling CORS
 
 In order for JavaScript to display the contents of an Amazon S3 bucket, the bucket must be readable by anyone and may need to have the proper Cross-Origin Resource Sharing (CORS) configuration. You can do this by going to the Amazon S3 console at <https://console.aws.amazon.com/s3> and selecting your bucket.
