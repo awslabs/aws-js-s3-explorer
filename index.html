@@ -184,17 +184,17 @@ permissions and limitations under the License.
 
     function object2hrefvirt(bucket, object) {
         if (AWS.config.region === "us-east-1") {
-            return document.location.protocol + '//' + bucket + '.s3.amazonaws.com/' + escape(object);
+            return document.location.protocol + '//' + bucket + '.s3.amazonaws.com/' + encodeURIComponent(object);
         } else {
-            return document.location.protocol + '//' + bucket + '.s3-' + AWS.config.region + '.amazonaws.com/' + escape(object);
+            return document.location.protocol + '//' + bucket + '.s3-' + AWS.config.region + '.amazonaws.com/' + encodeURIComponent(object);
         }
     }
 
     function object2hrefpath(bucket, object) {
         if (AWS.config.region === "us-east-1") {
-            return document.location.protocol + "//s3.amazonaws.com/" + bucket + "/" + escape(object);
+            return document.location.protocol + "//s3.amazonaws.com/" + bucket + "/" + encodeURIComponent(object);
         } else {
-            return document.location.protocol + "//s3-' + AWS.config.region + '.amazonaws.com/" + bucket + "/" + escape(object);
+            return document.location.protocol + "//s3-' + AWS.config.region + '.amazonaws.com/" + bucket + "/" + encodeURIComponent(object);
         }
     }
 
