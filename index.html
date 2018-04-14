@@ -117,6 +117,7 @@ permissions and limitations under the License.
                                     <th>Object</th>
                                     <th>Folder</th>
                                     <th>Last Modified</th>
+                                    <th>Timestamp</th>
                                     <th>Size</th>
                                 </tr>
                             </thead>
@@ -135,7 +136,7 @@ permissions and limitations under the License.
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootbox.js/4.4.0/bootbox.min.js"></script>
 <script src="https://sdk.amazonaws.com/js/aws-sdk-2.207.0.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.21.0/moment.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.0/moment.min.js"></script>
 <script src="https://cdn.datatables.net/1.10.5/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/plug-ins/f2c75b7247b/integration/bootstrap/3/dataTables.bootstrap.js"></script>
 
@@ -533,6 +534,12 @@ permissions and limitations under the License.
                 }
             }, {
                 "aTargets": [3],
+                "mData": "LastModified",
+                "mRender": function(data, type, full) {
+                    return data ? moment(data).local().format('YYYY-MM-DD HH:mm:ss') : "";
+                }
+            }, {
+                "aTargets": [4],
                 "mData": function(source, type, val) {
                     return source.Size ? ((type == 'display') ? bytesToSize(source.Size) : source.Size) : "";
                 }
