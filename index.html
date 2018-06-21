@@ -30,24 +30,24 @@ permissions and limitations under the License.
         #wrapper {
             padding-left: 0;
         }
-        
+
         #page-wrapper {
             width: 100%;
             padding: 5px 15px;
         }
-        
+
         #tb-s3objects {
             width: 100% !Important;
         }
-        
+
         a {
             color: #00B7FF;
         }
-        
+
         body {
             font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
         }
-        
+
         td {
             font: 12px "Lucida Grande", Helvetica, Arial, sans-serif;
         }
@@ -183,24 +183,28 @@ permissions and limitations under the License.
         };
     }
 
-    function object2hrefvirt(bucket, object) {
+    function object2hrefvirt(bucket, key) {
+        var enckey = key.split('/').map(function(x) { return encodeURIComponent(x); }).join('/');
+
         if (AWS.config.region === "us-east-1") {
-            return document.location.protocol + '//' + bucket + '.s3.amazonaws.com/' + encodeURIComponent(object);
+            return document.location.protocol + '//' + bucket + '.s3.amazonaws.com/' + enckey;
         } else {
-            return document.location.protocol + '//' + bucket + '.s3-' + AWS.config.region + '.amazonaws.com/' + encodeURIComponent(object);
+            return document.location.protocol + '//' + bucket + '.s3-' + AWS.config.region + '.amazonaws.com/' + enckey;
         }
     }
 
-    function object2hrefpath(bucket, object) {
+    function object2hrefpath(bucket, key) {
+        var enckey = key.split('/').map(function(x) { return encodeURIComponent(x); }).join('/');
+
         if (AWS.config.region === "us-east-1") {
-            return document.location.protocol + "//s3.amazonaws.com/" + bucket + "/" + encodeURIComponent(object);
+            return document.location.protocol + "//s3.amazonaws.com/" + bucket + "/" + enckey;
         } else {
-            return document.location.protocol + "//s3-' + AWS.config.region + '.amazonaws.com/" + bucket + "/" + encodeURIComponent(object);
+            return document.location.protocol + "//s3-' + AWS.config.region + '.amazonaws.com/" + bucket + "/" + enckey;
         }
     }
 
-    function isthisdocument(bucket, object) {
-        return object === "index.html";
+    function isthisdocument(bucket, key) {
+        return key === "index.html";
     }
 
     function isfolder(path) {
@@ -346,9 +350,9 @@ permissions and limitations under the License.
         };
 
         return {
-            // This is the callback that the S3 API makes when an S3 listObjects
+            // This is the callback that the S3 API makes when an S3 listObjectsV2
             // request completes (successfully or in error). Note that a single call
-            // to listObjects may not be enough to get all objects so we need to
+            // to listObjectsV2 may not be enough to get all objects so we need to
             // check if the returned data is truncated and, if so, make additional
             // requests with a 'next marker' until we have all the objects.
             cb: function(err, data) {
@@ -389,7 +393,7 @@ permissions and limitations under the License.
                         console.log('Bucket ' + scope.params.Bucket + ' stopped');
                     } else if (data.IsTruncated) {
                         console.log('Bucket ' + scope.params.Bucket + ' truncated');
-                        s3.makeUnauthenticatedRequest('listObjects', scope.params, scope.cb);
+                        s3.makeUnauthenticatedRequest('listObjectsV2', scope.params, scope.cb);
                     } else {
                         console.log('Bucket ' + scope.params.Bucket + ' has ' + scope.Contents.length + ' objects, including ' + scope.CommonPrefixes.length + ' prefixes');
                         delete scope.params.Marker;
@@ -401,12 +405,12 @@ permissions and limitations under the License.
                 }
             },
 
-            // Start the spinner, clear the table, make an S3 listObjects request
+            // Start the spinner, clear the table, make an S3 listObjectsV2 request
             go: function() {
                 scope.cb = this.cb;
                 $('#bucket-loader').addClass('fa-spin');
                 $('#tb-s3objects').DataTable().clear();
-                s3.makeUnauthenticatedRequest('listObjects', scope.params, this.cb);
+                s3.makeUnauthenticatedRequest('listObjectsV2', scope.params, this.cb);
             },
 
             stop: function() {
@@ -498,7 +502,7 @@ permissions and limitations under the License.
                 return '<a data-s3="folder" data-prefix="' + data + '" href="' + object2hrefvirt(s3exp_config.Bucket, data) + '">' + prefix2folder(data) + '</a>';
             } else {
                 console.log("not folder/this document: " + data);
-                return '<a data-s3="object" href="' + object2hrefvirt(s3exp_config.Bucket, data) + '">' + fullpath2filename(data) + '</a>';
+                return '<a data-s3="object" href="' + object2hrefvirt(s3exp_config.Bucket, data) + '"download="' + fullpath2filename(data) + '">' + fullpath2filename(data) + '</a>';
             }
         }
 

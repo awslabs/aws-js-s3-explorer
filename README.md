@@ -6,17 +6,17 @@ The index.html file in this bucket contains the entire application. A visitor to
 
 ## Screenshots
 
-Default starting view: 
+Default starting view:
 ![Main screen][main]
 
 [main]: https://raw.githubusercontent.com/awslabs/aws-js-s3-explorer/master/screenshots/explorer-main.png
 
-View all objects in folder: 
+View all objects in folder:
 ![Folder selected screen][folder]
 
 [folder]: https://raw.githubusercontent.com/awslabs/aws-js-s3-explorer/master/screenshots/explorer-folder.png
 
-View all objects in bucket: 
+View all objects in bucket:
 ![Bucket traversal screen][bucket]
 
 [bucket]: https://raw.githubusercontent.com/awslabs/aws-js-s3-explorer/master/screenshots/explorer-bucket.png
