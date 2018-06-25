@@ -1,0 +1,155 @@
+#page-wrapper {
+    width: 100%;
+    padding: 5px 15px;
+}
+
+#tb-s3objects {
+    width: 100% !Important;
+}
+
+a {
+    color: #00B7FF;
+}
+
+body {
+    /*font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;*/
+    font-family: "Open Sans", sans-serif;
+}
+
+td {
+    /*font: 12px "Lucida Grande", Helvetica, Arial, sans-serif;*/
+    font-family: "Open Sans", sans-serif;
+}
+
+.title {
+    padding: 6px 12px;
+}
+
+.input-group-addon {
+    min-width: 150px;
+}
+
+.bottom-marg-10 {
+    margin-bottom: 10px;
+}
+
+.breadcrumb {
+    margin-bottom: 0;
+}
+
+.checkbox {
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+#navbuttons .btn {
+    padding: 3px 6px;
+}
+
+.tab-content {
+    border-left: 1px solid #ddd;
+    border-right: 1px solid #ddd;
+    padding: 10px;
+    border-bottom: 1px solid #dddddd;
+    border-radius: 0 0 4px 4px;
+}
+
+.nav-tabs {
+    margin-bottom: 0;
+}
+
+.dropzone {
+    /*border: 1px dashed #0088CC;*/
+    /*border-radius: 5px;*/
+}
+
+.dropzone.dragover {
+    /*border: 1px solid #0088CC;*/
+    /*border: 2px dashed #0088CC;*/
+    /*outline: 4px dashed #0088CC;*/
+    /*outline-radius: 5px;*/
+    box-shadow: 0 0 3pt 2pt #0088CC;
+    /*border: 5px dashed #0088CC;*/
+    /*padding: 5px;*/
+    /*outline: 5px dashed #0088CC;*/
+}
+
+#upload-tbody .progress {
+  margin-bottom: 0;
+}
+
+.uploaderror, .trasherror {
+    color: #AF0000;
+}
+
+.trashdeleted {
+    color: #00AF00;
+}
+
+table.dataTable tbody tr {
+    cursor: pointer;
+}
+
+#TrashModal77 {
+    width: 700px;
+}
+
+.modal-header {
+    background-color: #337ab7;
+    color: #FFFFFF;
+    border-top-left-radius: 3px;
+    border-top-right-radius: 3px;
+}
+
+.modal-header button.close {
+    color: #FFFFFF;
+}
+
+.alert table {
+    width: 100%;
+    border: 3px solid white;
+    border-collapse: collapse;
+    font-size: 1.5rem;
+}
+
+.alert caption {
+    opacity: 0;
+    margin: 0;
+    height: 0;
+}
+
+.alert tr {
+    /*background: rgb(251, 174, 44);*/
+    border-bottom: 2px solid white;
+    border-top: 3px solid white;
+}
+
+.alert tr:nth-child(even) {
+    /*background: ckground: rgb(249, 228, 130);*/
+}
+
+.alert th {
+    background: rgb(65, 62, 61);
+    color: white;
+    padding: .6em 1em .3em;
+    text-align: left;
+    border-bottom: 3px solid white;
+}
+
+.alert th:first-child {
+    width: 15%;
+}
+
+.alert th,
+.alert td {
+    vertical-align: middle;
+    border-left: 3px solid white;
+}
+
+.alert td {
+    padding: .4em 1em;
+}
+
+.alert table {
+    color: #000000;
+}
