@@ -47,6 +47,7 @@ app.factory('SharedService', function($rootScope) {
         // DEBUG.log("settings.mfa", settings.mfa);
         // DEBUG.log("settings.cred", settings.cred);
         AWS.config.update(settings.cred);
+        AWS.config.update({ region: settings.region });
 
         this.skew && this.correctClockSkew(settings.bucket); this.skew = false;
 
@@ -412,6 +413,7 @@ app.controller('ViewController', function($scope, SharedService) {
             var params = { Bucket: data.Name, Prefix: data.Prefix, Delimiter: data.Delimiter, Marker: marker };
 
             // DEBUG.log("AWS.config:", JSON.stringify(AWS.config));
+
             if ($scope.stop) {
                 DEBUG.log('Bucket ' + data.Name + ' stopped');
                 $bl.removeClass('fa-spin');
@@ -451,6 +453,8 @@ app.controller('ViewController', function($scope, SharedService) {
 
         var s3 = new AWS.S3(AWS.config);
         var params = { Bucket: bucket, Prefix: prefix, Delimiter: delimiter, Marker: marker };
+
+        // DEBUG.log("AWS.config:", JSON.stringify(AWS.config));
 
         // Now make S3 listObjects call(s)
         if (AWS.config.credentials && AWS.config.credentials.accessKeyId) {
@@ -1063,8 +1067,9 @@ $(document).ready(function(){
     'use strict';
     DEBUG.log("Version jQuery", $.fn.jquery);
 
-    // Default AWS region
-    AWS.config.region = 'us-east-1';
+    // Default AWS region and v4 signature
+    AWS.config.update({ region: '' });
+    AWS.config.update({ signatureVersion: 'v4' });
 
     // Show navbuttons
     $('#navbuttons').removeClass('hide');

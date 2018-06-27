@@ -49,21 +49,28 @@ permissions and limitations under the License.
                             <div class="col-md-18">
                                 <div class="panel panel-default">
                                     <div class="panel-body">
-                                        <p><b>Bucket</b>: Please indicate which S3 bucket you want to explore.</p>
-                                        <!--
-                                        <span class="input-group-addon">Region</span>
-                                        <select name="county" class="form-control" ng-model="settings.region">
-                                            <option value="">US Standard</option>
-                                            <option value="us-west-2">US West (Oregon)</option>
-                                            <option value="us-west-1">US West (N. California)</option>
-                                            <option value="eu-west-1">EU (Ireland)</option>
-                                            <option value="eu-central-1">EU (Frankfurt)</option>
-                                            <option value="ap-southeast-1">Asia Pacific (Singapore)</option>
-                                            <option value="ap-northeast-1">Asia Pacific (Tokyo)</option>
-                                            <option value="ap-southeast-2">Asia Pacific (Sydney)</option>
-                                            <option value="sa-east-1">South America (São Paulo)</option>
-                                        </select>
-                                        -->
+                                        <p><b>Bucket</b>: Please indicate which region and S3 bucket you want to explore.</p>
+                                        <div class="input-group bottom-marg-10">
+                                            <span class="input-group-addon">Region</span>
+                                            <select name="region" class="form-control" ng-model="settings.region">
+                                                <option value="ap-south-1">Asia Pacific (Mumbai)</option>
+                                                <option value="ap-northeast-3">Asia Pacific (Osaka Local)</option>
+                                                <option value="ap-northeast-2">Asia Pacific (Seoul)</option>
+                                                <option value="ap-southeast-1">Asia Pacific (Singapore)</option>
+                                                <option value="ap-southeast-2">Asia Pacific (Sydney)</option>
+                                                <option value="ap-northeast-1">Asia Pacific (Tokyo)</option>
+                                                <option value="ca-central-1">Canada (Central)</option>
+                                                <option value="eu-central-1">EU (Frankfurt)</option>
+                                                <option value="eu-west-1">EU (Ireland)</option>
+                                                <option value="eu-west-2">EU (London)</option>
+                                                <option value="eu-west-3">EU (Paris)</option>
+                                                <option value="sa-east-1">South America (São Paulo)</option>
+                                                <option value="">US East (N. Virginia)</option>
+                                                <option value="us-east-2">US East (Ohio)</option>
+                                                <option value="us-west-1">US West (N. California)</option>
+                                                <option value="us-west-2">US West (Oregon)</option>
+                                            </select>
+                                        </div>
                                         <div class="input-group bottom-marg-10" ng-show="settings.buckets.length">
                                             <span class="input-group-addon">Bucket</span>
                                             <select name="bucketlist" class="form-control" ng-model="settings.selected_bucket" placeholder="bucket" ng-required="buckets.length">
@@ -309,7 +316,7 @@ To do this, select your bucket in the buckets panel of the Amazon S3 Console and
                                 <tbody id="upload-tbody"></tbody>
                             </table>
                             <p>
-                            The selected files will be upload to {{upload.title}}.
+                            The selected files will be uploaded to {{upload.title}}.
                             </p>
                         </div>
                     </div>
