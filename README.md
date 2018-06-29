@@ -53,40 +53,68 @@ Bucket information:
 
 [bucket-info]: https://raw.githubusercontent.com/awslabs/aws-js-s3-explorer/v2-alpha/screenshots/explorer-info.png
 
-## Setting Bucket Permissions
+## Deployment and Use
 
-### Public S3 Bucket
+Note that in the general case, you are working with two distinct S3 buckets:
 
-To share the contents of an Amazon S3 bucket publicly, you will need to create a policy that allows anyone to see and access the contents of your bucket. To do this, you need to update the bucket policy.
+1. the S3 bucket hosting this tool, let's call it BUCKET1
+2. the S3 bucket that you intend to use this tool to explore, let's call it BUCKET2
 
-Using the [AWS Console for S3](https://s3.console.aws.amazon.com/), click your bucket name in the bucket list, then click the *Permissions* tab, then click *Bucket Policy*. The *Bucket Policy Editor* panel will open up with a textfield where you can enter a policy for your bucket. Enter the following policy, but replace *BUCKET-NAME* with the name of your bucket, then click *Save*:
+To deploy S3 Explorer, you have to do the following:
+
+1. store index.html, explorer.css, and explorer.js in BUCKET1
+2. apply an S3 bucket policy to BUCKET1 that allows unauthenticated read of the 3 files
+
+To launch and use S3 Explorer to explore BUCKET2 you have to do the following:
+
+1. open the hosted index.html file in your browser at https://s3.amazonaws.com/BUCKET1/index.html
+2. supply BUCKET2 as the bucket name
+3. choose Private Bucket (I have AWS credentials)
+4. supply your IAM credentials
+5. click Query S3
+
+More detailed configuration instructions follow.
+
+### Configure the Bucket Hosting S3 Explorer
+
+To launch the S3 Explorer, you need to make its files publicly readable. To do that, you will need to create a policy that allows anyone to see and access the S3 Explorer files.
+
+Using the [AWS Console for S3](https://s3.console.aws.amazon.com/), click your bucket name in the bucket list, then click the *Permissions* tab, then click *Bucket Policy*. The *Bucket Policy Editor* panel will open up with a textfield where you can enter a policy for your bucket. Enter the following policy, but replace *BUCKET1* with the name of your bucket, then click *Save*:
 
 ```json
 {
   "Version": "2012-10-17",
   "Statement": [
     {
-      "Sid": "PublicListGet",
+      "Sid": "S3ExplorerGetMinimal",
       "Effect": "Allow",
       "Principal": "*",
-      "Action": [
-        "s3:List*",
-        "s3:Get*"
-      ],
+      "Action": "s3:Get*",
       "Resource": [
-        "arn:aws:s3:::BUCKET-NAME",
-        "arn:aws:s3:::BUCKET-NAME/*"
+        "arn:aws:s3:::BUCKET1/index.html",
+        "arn:aws:s3:::BUCKET1/explorer.css",
+        "arn:aws:s3:::BUCKET1/explorer.js"
       ]
     }
   ]
 }
 ```
 
-Note that this policy will allow anyone to list the contents of your bucket and to get any file from within the bucket. It will *not* allow them to upload, modify, or delete files in your bucket.
+Note that this policy will allow anyone to get the listed files from the bucket, but it will *not* allow them to upload, modify, or delete files.
 
-### Private S3 Bucket
+If you prefer to restrict the set of source IPs that can access the files then you can do this with an additional bucket policy condition on source IP address. Add the following policy fragment to the S3 bucket policy, replacing *203.0.113.0/24* with the relevant IP CIDR block:
 
-To access the contents of a private Amazon S3 bucket, you will need to create an IAM policy that allows access to the contents of your bucket. You will also need to supply IAM credentials to S3 Explorer. An example IAM policy is provided below:
+```json
+"Condition": {
+    "IpAddress": {
+        "aws:SourceIp": "203.0.113.0/24"
+    }
+}
+```
+
+### Configure Credentials for Using S3 Explorer
+
+To access the contents of a private Amazon S3 bucket named BUCKET2, you will need to create an IAM policy that allows access to that bucket. You will also need to supply IAM credentials to S3 Explorer. An example IAM policy allowing access to BUCKET2 is provided below:
 
 ```json
 {
@@ -101,67 +129,58 @@ To access the contents of a private Amazon S3 bucket, you will need to create an
         "s3:Delete*"
       ],
       "Resource": [
-        "arn:aws:s3:::BUCKET-NAME",
-        "arn:aws:s3:::BUCKET-NAME/*"
+        "arn:aws:s3:::BUCKET2",
+        "arn:aws:s3:::BUCKET2/*"
       ]
     }
   ]
 }
 ```
 
-## Enabling CORS
+Once you have created this IAM policy, you can attach the policy to an IAM user. IAM users with this policy can now use S3 Explorer to explore BUCKET2.
 
-In order for JavaScript to display the contents of an Amazon S3 bucket, the bucket must be readable by anyone and may need to have the proper Cross-Origin Resource Sharing (CORS) configuration. You can do this by going to the Amazon S3 console at <https://console.aws.amazon.com/s3> and selecting your bucket.
+### Enabling CORS
 
-### CORS Configuration
+In order for S3 Explorer hosted in BUCKET1 to explore the contents of BUCKET2, BUCKET2 needs to have the proper Cross-Origin Resource Sharing (CORS) configuration allowing web pages hosted in BUCKET1 to make requests to BUCKET2. You can do this by going to the Amazon S3 console at <https://console.aws.amazon.com/s3> and selecting BUCKET2.
 
-You may need to enable Cross-Origin Resource Sharing (CORS). CORS defines a way for client web applications that are loaded in one domain to interact with resources in a different domain.
+CORS defines a way for client web applications that are loaded in one domain to interact with resources in a different domain.
 
-There are two URLs you can typically use to access your index.html file:
+Note that CORS configuerations do not, in and of themselves, authorize the user to perform any actions on the bucket. They simply enable the browser's security model to allow a request to S3. Actual permissions for the user must be configured either via bucket permissions (for public access), or IAM permissions (for private access).
 
-1. <https://s3.amazonaws.com/BUCKET-NAME/index.html> (path-style URL)
-2. <https://BUCKET-NAME.s3.amazonaws.com/index.html> (virtual-hosted-style URL)
+#### CORS for Read-Only S3 Bucket
 
-If you decide to access your index.html file via a virtual-hosted-style URL (#2 above) then you should *not* need to enable CORS and you can skip this section. We recommend that you use this form of URL.
-
-If you decide to access your index.html file via a path-style URL (#1 above) then you will need to enable CORS. This is because the web page is served up from s3.amazonaws.com but the AWS JavaScript SDK makes requests to BUCKET-NAME.s3.amazonaws.com.
-
-For security reasons, browsers normally block requests by JavaScript code to access URLs that are unrelated to the source of the code (such as the contents of your bucket), but with CORS, we can configure your bucket to explicitly enable JavaScript to do this.
-
-To configure your bucket to allow cross-origin requests, you create a CORS configuration, which is an XML document with rules that identify the origins that you will allow to access your bucket, the operations (HTTP methods) will support for each origin, and other operation-specific information.
-
-To do this, click your bucket in the bucket list within the Amazon S3 Console and then click the Permissions tab. Click the CORS Configuration button. The CORS Configuration Editor panel will open up with a textfield where you can enter a CORS Configuration. Sample configurations are provided below.
-
-Note that CORS configuerations do not, in and of themselves, authorize the user to perform any actions on the bucket. They simply enable the browser's security model to allow a request to S3. Actual permissions for the user must be configured either via bucket permissions(for public access), or IAM permissions (for private access).
-
-### CORS for Public S3 Bucket
-
-If you intend to allow public read accedss to objects in the bucket then you will need to supply a CORS configuration that permits HEAD and GET operations, for example:
+If you intend to allow read-only access from BUCKET1, which hosts S3 Explorer, to BUCKET2, then you will need to supply a CORS configuration on BUCKET2 that permits HEAD and GET operations, for example:
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <CORSConfiguration xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
   <CORSRule>
     <AllowedOrigin>https://s3.amazonaws.com</AllowedOrigin>
+    <AllowedOrigin>https://BUCKET1.s3.amazonaws.com</AllowedOrigin>
     <AllowedMethod>HEAD</AllowedMethod>
     <AllowedMethod>GET</AllowedMethod>
     <AllowedHeader>*</AllowedHeader>
+    <MaxAgeSeconds>3000</MaxAgeSeconds>
     <ExposeHeader>ETag</ExposeHeader>
     <ExposeHeader>x-amz-meta-custom-header</ExposeHeader>
+    <ExposeHeader>x-amz-server-side-encryption</ExposeHeader>
+    <ExposeHeader>x-amz-request-id</ExposeHeader>
+    <ExposeHeader>x-amz-id-2</ExposeHeader>
     <ExposeHeader>date</ExposeHeader>
   </CORSRule>
 </CORSConfiguration>
 ```
 
-### CORS for Private S3 Bucket
+#### CORS for Writable S3 Bucket
 
-If you intend to allow modifications to objects in the bucket, for example deleting existing objects or uploading new objects, then you will need to supply additional CORS configuration that permits PUT and DELETE operations, for example:
+If you intend to allow modifications to objects in BUCKET2, for example deleting existing objects or uploading new objects, then you will need to supply additional CORS configuration that permits PUT and DELETE operations, for example:
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <CORSConfiguration xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
   <CORSRule>
     <AllowedOrigin>https://s3.amazonaws.com</AllowedOrigin>
+    <AllowedOrigin>https://BUCKET1.s3.amazonaws.com</AllowedOrigin>
     <AllowedMethod>HEAD</AllowedMethod>
     <AllowedMethod>GET</AllowedMethod>
     <AllowedMethod>PUT</AllowedMethod>
@@ -232,15 +251,3 @@ If you choose to explore a private S3 bucket then you will need to supply AWS cr
 * IAM credentials: access key ID and secret access key
 * IAM credentials with MFA: access key ID, secret access key, and authentication code from an MFA device
 * STS credentials: access key ID, secret access key, and session token
-
-## Source IP Whitelisting
-
-If you prefer to restrict the set of source IPs that can access the contents of your bucket then you can do this with an additional bucket policy condition on source IP address. Add the following policy fragment to the S3 bucket policy, replacing *203.0.113.0/24* with the relevant IP CIDR block:
-
-```json
-"Condition": {
-    "IpAddress": {
-        "aws:SourceIp": "203.0.113.0/24"
-    }
-}
-```
