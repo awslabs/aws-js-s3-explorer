@@ -368,10 +368,8 @@ permissions and limitations under the License.
 
                     // Store marker before filtering data
                     if (data.IsTruncated) {
-                        if (data.NextMarker) {
-                            scope.params.Marker = data.NextMarker;
-                        } else if (data.Contents.length > 0) {
-                            scope.params.Marker = data.Contents[data.Contents.length - 1].Key;
+                        if (data.NextContinuationToken) {
+                            scope.params.ContinuationToken = data.NextContinuationToken;
                         }
                     }
 
@@ -396,7 +394,7 @@ permissions and limitations under the License.
                         s3.makeUnauthenticatedRequest('listObjectsV2', scope.params, scope.cb);
                     } else {
                         console.log('Bucket ' + scope.params.Bucket + ' has ' + scope.Contents.length + ' objects, including ' + scope.CommonPrefixes.length + ' prefixes');
-                        delete scope.params.Marker;
+                        delete scope.params.ContinuationToken;
                         if (scope.completecb) {
                             scope.completecb(scope, true);
                         }
@@ -415,7 +413,7 @@ permissions and limitations under the License.
 
             stop: function() {
                 scope.stop = true;
-                delete scope.params.Marker;
+                delete scope.params.ContinuationToken;
                 if (scope.completecb) {
                     scope.completecb(scope, false);
                 }
@@ -454,7 +452,7 @@ permissions and limitations under the License.
                 // bootbox.alert("Stop is not yet supported.");
                 s3exp_lister.stop();
             } else {
-                delete s3exp_config.Marker;
+                delete s3exp_config.ContinuationToken;
                 (s3exp_lister = s3list(s3exp_config, s3draw)).go();
             }
         });
@@ -478,7 +476,7 @@ permissions and limitations under the License.
                 console.log("Switch to bucket");
                 var choice = $(this).val();
                 $('#tb-s3objects').DataTable().column(1).visible(choice === 'bucket');
-                delete s3exp_config.Marker;
+                delete s3exp_config.ContinuationToken;
                 delete s3exp_config.Prefix;
                 s3exp_config.Delimiter = '';
                 (s3exp_lister = s3list(s3exp_config, s3draw)).go();
@@ -486,7 +484,7 @@ permissions and limitations under the License.
             } else {
                 console.log("Switch to folder");
                 $('#tb-s3objects').DataTable().column(1).visible(false);
-                delete s3exp_config.Marker;
+                delete s3exp_config.ContinuationToken;
                 delete s3exp_config.Prefix;
                 s3exp_config.Delimiter = '/';
                 (s3exp_lister = s3list(s3exp_config, s3draw)).go();
@@ -584,7 +582,7 @@ permissions and limitations under the License.
             // If the user has clicked on a folder then navigate into that folder
             if (target.dataset.s3 === "folder") {
                 resetDepth();
-                delete s3exp_config.Marker;
+                delete s3exp_config.ContinuationToken;
                 s3exp_config.Prefix = target.dataset.prefix;
                 s3exp_config.Delimiter = $("input[name='optionsdepth']:checked").val() == "folder" ? "/" : "";
                 (s3exp_lister = s3list(s3exp_config, s3draw)).go();
