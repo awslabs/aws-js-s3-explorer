@@ -142,6 +142,7 @@ permissions and limitations under the License.
 <script src="https://cdn.datatables.net/1.10.19/js/dataTables.bootstrap.min.js"></script>
 
 <script type="text/javascript">
+    var HIDE_INDEX = true;
     var s3exp_config = {
         Region: '',
         Bucket: '',
@@ -380,6 +381,14 @@ permissions and limitations under the License.
                     data.Contents = data.Contents.filter(function(el) {
                         return el.Key !== scope.params.Prefix;
                     });
+
+                    // Optionally, filter the root index.html out of the listed S3 objects
+                    if (HIDE_INDEX) {
+                        console.log("Filter: remove index.html");
+                        data.Contents = data.Contents.filter(function(el) {
+                            return el.Key !== "index.html";
+                        });
+                    }
 
                     // Accumulate the S3 objects and common prefixes
                     scope.Contents.push.apply(scope.Contents, data.Contents);
