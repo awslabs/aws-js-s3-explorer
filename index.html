@@ -23,10 +23,10 @@ permissions and limitations under the License.
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="shortcut icon" href="https://aws.amazon.com/favicon.ico">
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css" integrity="sha384-PmY9l28YgO4JwMKbTvgaS7XNZJ30MK9FAZjjzXtlqyZCqBY6X6bXIkM++IkyinN+" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap-theme.min.css" integrity="sha384-jzngWsPS6op3fgRCDTESqrEJwRKck+CILhJVO5VvaAZCq8JYf8HsR/HPpBOOPZfR" crossorigin="anonymous">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.9/css/all.css">
-    <link rel="stylesheet" href="https://cdn.datatables.net/plug-ins/f2c75b7247b/integration/bootstrap/3/dataTables.bootstrap.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.10.19/css/dataTables.bootstrap.min.css">
     <link rel="stylesheet" href="explorer.css">
 </head>
 
@@ -174,13 +174,13 @@ permissions and limitations under the License.
                             </div>
                             <div class="tab-pane" id="cors" ng-hide="!info.cors">
                                 <br/>
-                                <p>The CORS Configuration for {{info.bucket}} is below.</p>
-                                <pre><span class="modal-body" id="info-cors"></span></pre>
+                                <p>The currently-configured CORS Configuration for {{info.bucket}} is below.</p>
+                                <pre><span id="info-cors"></span></pre>
                             </div>
                             <div class="tab-pane" id="policy" ng-hide="!info.policy">
                                 <br/>
-                                <p>The Bucket Policy for {{info.bucket}} is below.</p>
-                                <pre><span class="modal-body" id="info-policy"></span></pre>
+                                <p>The currently-configured Bucket Policy for {{info.bucket}} is below.</p>
+                                <pre><span id="info-policy"></span></pre>
                             </div>
                             <div class="tab-pane" id="corsref">
                                 <br/>
@@ -191,7 +191,7 @@ JavaScript in the browser cannot display the contents of an Amazon S3 bucket unl
 To configure CORS, you create a CORS configuration that identifies the origins allowed to access your bucket and the operations (HTTP methods) supported.
 </p>
 <p>
-To do this, select your bucket in the buckets panel of the Amazon S3 Console and click to reveal Permissions in the Properties pane. Click Edit CORS Configuration. The CORS Configuration Editor panel will open up with a field where you can enter a CORS Configuration. Enter the following configuration:
+To do this, select your bucket in the buckets panel of the Amazon S3 Console and click to reveal Permissions in the Properties pane. Click Edit CORS Configuration. The CORS Configuration Editor panel will open up with a field where you can enter a CORS Configuration. Enter a configuration similar to the following:
 </p>
                                     <p>
 <pre>
@@ -200,6 +200,7 @@ To do this, select your bucket in the buckets panel of the Amazon S3 Console and
     &lt;CORSRule&gt;
         &lt;AllowedOrigin&gt;*&lt;/AllowedOrigin&gt;
         &lt;AllowedMethod&gt;GET&lt;/AllowedMethod&gt;
+        &lt;AllowedMethod&gt;POST&lt;/AllowedMethod&gt;
         &lt;AllowedMethod&gt;PUT&lt;/AllowedMethod&gt;
         &lt;AllowedMethod&gt;HEAD&lt;/AllowedMethod&gt;
         &lt;MaxAgeSeconds&gt;3000&lt;/MaxAgeSeconds&gt;
@@ -209,6 +210,10 @@ To do this, select your bucket in the buckets panel of the Amazon S3 Console and
     &lt;/CORSRule&gt;
 &lt;/CORSConfiguration&gt;
 </pre>
+<p>
+Please see the project <a target="_blank" href="https://github.com/awslabs/aws-js-s3-explorer/blob/v2-alpha/README.md">README</a> for more specific details on how to create an appropriate CORS configuration.
+</p>
+
                                     </p>
                                 </div>
                                 <div class="tab-pane" id="policyref">
@@ -216,7 +221,8 @@ To do this, select your bucket in the buckets panel of the Amazon S3 Console and
                                     <p>Here is a sample S3 bucket policy that you can use. Change <i>999999999999</i> to your AWS account number and change <i>mybucket</i> to your bucket name.</p>
                                     <p>
 <pre>
-"Version": "2012-10-17",
+{
+    "Version": "2012-10-17",
     "Statement": [{
         "Sid": "AllPermissionsForOwner",
         "Effect": "Allow",
@@ -228,7 +234,10 @@ To do this, select your bucket in the buckets panel of the Amazon S3 Console and
     }]
 }
 </pre>
-                                </p>
+<p>
+Please see the project <a target="_blank" href="https://github.com/awslabs/aws-js-s3-explorer/blob/v2-alpha/README.md">README</a> for more specific details on how to create an appropriate S3 bucket policy.
+</p>
+                                        </p>
                             </div>
                         </div>
                     </div>
@@ -424,11 +433,11 @@ To do this, select your bucket in the buckets panel of the Amazon S3 Console and
 </html>
 
 <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
-<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.6.5/angular.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js" integrity="sha384-vhJnz1OVIdLktyixHY4Uk3OHEwdQqPppqYR8+5mjsauETgLOcEynD9oPHhhz18Nw" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.7.5/angular.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootbox.js/4.4.0/bootbox.min.js"></script>
 <script src="https://sdk.amazonaws.com/js/aws-sdk-2.207.0.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.0/moment.min.js"></script>
-<script src="https://cdn.datatables.net/1.10.5/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/plug-ins/f2c75b7247b/integration/bootstrap/3/dataTables.bootstrap.js"></script>
+<script src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.10.19/js/dataTables.bootstrap.min.js"></script>
 <script src="explorer.js"></script>
