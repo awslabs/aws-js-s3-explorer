@@ -173,7 +173,7 @@ If you intend to allow read-only access from BUCKET1, which hosts S3 Explorer, t
 
 #### CORS for Writable S3 Bucket
 
-If you intend to allow modifications to objects in BUCKET2, for example deleting existing objects or uploading new objects, then you will need to supply additional CORS configuration that permits PUT and DELETE operations, for example:
+If you intend to allow modifications to objects in BUCKET2, for example deleting existing objects or uploading new objects, then you will need to supply additional CORS configuration that permits PUT, POST and DELETE operations, for example:
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -183,6 +183,7 @@ If you intend to allow modifications to objects in BUCKET2, for example deleting
     <AllowedOrigin>https://BUCKET1.s3.amazonaws.com</AllowedOrigin>
     <AllowedMethod>HEAD</AllowedMethod>
     <AllowedMethod>GET</AllowedMethod>
+    <AllowedMethod>POST</AllowedMethod>
     <AllowedMethod>PUT</AllowedMethod>
     <AllowedMethod>DELETE</AllowedMethod>
     <AllowedHeader>*</AllowedHeader>
