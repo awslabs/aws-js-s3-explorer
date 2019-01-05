@@ -25,7 +25,7 @@ permissions and limitations under the License.
     <link rel="shortcut icon" href="https://aws.amazon.com/favicon.ico">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css" integrity="sha384-PmY9l28YgO4JwMKbTvgaS7XNZJ30MK9FAZjjzXtlqyZCqBY6X6bXIkM++IkyinN+" crossorigin="anonymous">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap-theme.min.css" integrity="sha384-jzngWsPS6op3fgRCDTESqrEJwRKck+CILhJVO5VvaAZCq8JYf8HsR/HPpBOOPZfR" crossorigin="anonymous">
-    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.9/css/all.css">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdn.datatables.net/1.10.19/css/dataTables.bootstrap.min.css">
     <link rel="stylesheet" href="explorer.css">
 </head>
@@ -43,7 +43,7 @@ permissions and limitations under the License.
                     <fieldset>
                         <div class="modal-header">
                             <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                            <h4 class="modal-title">S3 Explorer Settings</h4>
+                            <h4 class="modal-title">S3 Explorer: Settings</h4>
                         </div>
                         <div class="modal-body">
                             <div class="col-md-18">
@@ -54,7 +54,7 @@ permissions and limitations under the License.
                                             <span class="input-group-addon">Region</span>
                                             <select name="region" class="form-control" ng-model="settings.region">
                                                 <option value="ap-south-1">Asia Pacific (Mumbai)</option>
-                                                <option value="ap-northeast-3">Asia Pacific (Osaka Local)</option>
+                                                <option value="ap-northeast-3">Asia Pacific (Osaka-Local)</option>
                                                 <option value="ap-northeast-2">Asia Pacific (Seoul)</option>
                                                 <option value="ap-southeast-1">Asia Pacific (Singapore)</option>
                                                 <option value="ap-southeast-2">Asia Pacific (Sydney)</option>
@@ -64,6 +64,7 @@ permissions and limitations under the License.
                                                 <option value="eu-west-1">EU (Ireland)</option>
                                                 <option value="eu-west-2">EU (London)</option>
                                                 <option value="eu-west-3">EU (Paris)</option>
+                                                <option value="eu-north-1">EU (Stockholm)</option>
                                                 <option value="sa-east-1">South America (São Paulo)</option>
                                                 <option value="">US East (N. Virginia)</option>
                                                 <option value="us-east-2">US East (Ohio)</option>
@@ -147,13 +148,47 @@ permissions and limitations under the License.
         </div>
     </div>
 
+    <!-- Modal Add Folder dialog -->
+    <div id="AddFolderModal" class="modal fade" ng-controller="AddFolderController" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form name="add_folder_form" ng-submit="add_folder()">
+                    <fieldset>
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                            <h4 class="modal-title">S3 Explorer: Add Folder</h4>
+                        </div>
+                        <div class="modal-body">
+                            <div class="col-md-18">
+                                <div class="panel panel-default">
+                                    <div class="panel-body">
+                                        <p>Please enter the full path of the S3 folder to create e.g. wallpaper/animals/dogs/</p>
+                                        <input name="folder" ng-model="add_folder.entered_folder" type="text" class="form-control" placeholder="folder" ng-required="true"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <div class="form-group">
+                                <div class="col-sm-offset-2 col-sm-10">
+                                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                                    <button type="submit" class="btn btn-primary"><i class='fa fa-folder-plus fa-lg'></i>&nbsp;Add Folder</button>
+                                </div>
+                            </div>
+                        </div>
+                    </fieldset>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- Info dialog -->
     <div id="InfoModal" class="modal fade" ng-controller="InfoController" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                    <h4 class="modal-title">S3 Explorer Information</h4>
+                    <h4 class="modal-title">S3 Explorer: Information</h4>
                 </div>
                 <div class="modal-body">
                     <div class="col-md-18">
@@ -259,7 +294,7 @@ Please see the project <a target="_blank" href="https://github.com/awslabs/aws-j
             <div class="modal-content">
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                    <h4 class="modal-title">S3 Explorer Trash:&nbsp;{{trash.title}}</h4>
+                    <h4 class="modal-title">S3 Explorer: Delete {{trash.count}} objects</h4>
                 </div>
                 <div class="modal-body">
                     <div class="col-md-18">
@@ -372,7 +407,8 @@ Please see the project <a target="_blank" href="https://github.com/awslabs/aws-j
                             <div>
                                 <!-- Info/Refresh/Settings buttons -->
                                 <div class="btn-group">
-                                    <span id="bucket-trash" style="cursor: pointer;" class="btn fa fa-trash fa-2x" title="Delete {{view.keys_selected.length}} selected object(s)" ng-hide="!view.settings || !view.keys_selected.length" ng-disabled="!view.keys_selected.length" ng-click="trash()"></span>
+                                    <span id="bucket-plus" style="cursor: pointer;" class="btn fa fa-folder-plus fa-2x" title="Add folder" data-target="#AddFolderModal" data-toggle="modal"></span>
+                                    <span id="bucket-trash" style="cursor: pointer;" class="btn fa fa-trash-alt fa-2x" title="Delete {{view.keys_selected.length}} selected object(s)" ng-hide="!view.settings || !view.keys_selected.length" ng-disabled="!view.keys_selected.length" ng-click="trash()"></span>
                                     <span id="bucket-info" style="cursor: pointer;" class="btn fa fa-info-circle fa-2x" title="Info" data-target="#InfoModal" data-toggle="modal"></span>
                                     <span id="bucket-loader" style="cursor: pointer;" class="btn fa fa-sync fa-2x" ng-hide="!view.settings" ng-click="refresh()" title="Refresh"></span>
                                     <span id="bucket-settings" style="cursor: pointer;" class="btn fa fa-cog fa-2x" title="Settings" data-target="#SettingsModal" data-toggle="modal"></span>

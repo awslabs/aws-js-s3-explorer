@@ -113,6 +113,10 @@ app.factory('SharedService', function($rootScope) {
         $rootScope.$broadcast('broadcastTrashObjects', { bucket: bucket, keys: keys });
     };
 
+    shared.addFolder = function(bucket, folder) {
+        $rootScope.$broadcast('broadcastViewRefresh');
+    };
+
     // We use pre-signed URLs so that the user can securely download
     // objects. For security reasons, we make these URLs time-limited and in
     // order to do that we need the client's clock to be in sync with the AWS
@@ -501,7 +505,7 @@ app.controller('ViewController', function($scope, SharedService) {
         return source.Size ? ((type == 'display') ? bytesToSize(source.Size) : source.Size) : "";
     };
 
-    // Initial DataTable settings
+    // Initial DataTable settings (must only do this one time)
     $('#s3objects-table').DataTable({
         iDisplayLength: 25,
         order: [[2, 'asc'], [1, 'asc']],
@@ -570,6 +574,63 @@ app.controller('ViewController', function($scope, SharedService) {
     $('#s3objects-table tbody').on('click', 'td', function(e) {
         $(this).parent().find('input[type="checkbox"]').trigger('click');
     });
+});
+
+//
+// AddFolderController: code associated with the add folder function.
+//
+app.controller('AddFolderController', function($scope, SharedService) {
+
+    DEBUG.log("AddFolderController init");
+    $scope.add_folder = {  settings: null, bucket: null, entered_folder: '' };
+    window.addFolderScope = $scope; // for debugging
+
+    $scope.$on('broadcastChangeSettings', function(e, args) {
+        DEBUG.log('AddFolderController', 'broadcast change settings bucket:', args.settings.bucket);
+        $scope.add_folder.settings = args.settings;
+        $scope.add_folder.bucket = args.settings.bucket;
+    });
+
+    $scope.add_folder = function() {
+        DEBUG.log('Add folder');
+
+        // Folder key cannot start with /
+        while ($scope.add_folder.entered_folder.startsWith('/')) {
+            $scope.add_folder.entered_folder = $scope.add_folder.entered_folder.substring(1);
+        }
+
+        // Folder key must end with /
+        if (!$scope.add_folder.entered_folder.endsWith('/')) {
+            $scope.add_folder.entered_folder += '/';
+        }
+
+        var s3 = new AWS.S3(AWS.config);
+        var params = {Bucket: $scope.add_folder.bucket, Key: $scope.add_folder.entered_folder};
+
+        DEBUG.log("Invoke headObject:", params);
+
+        // Test if an object with this key already exists
+        s3.headObject(params, function(err, data) {
+            if (err && err.code === 'NotFound') {
+                DEBUG.log("Invoke putObject:", params);
+
+                // Create a zero-sized object to simulate a folder
+                s3.putObject(params, function(err, data) {
+                    if (err) {
+                        DEBUG.log("putObject error:", err);
+                        bootbox.alert("Error creating folder: " + err);
+                    } else {
+                        SharedService.addFolder(params.Bucket, params.Key);
+                        $('#AddFolderModal').modal('hide');
+                    }
+                });
+            } else if (err) {
+                bootbox.alert("Error checking existence of folder: " + err);
+            } else {
+                bootbox.alert("Error: folder or object already exists at " + params.Key);
+            }
+        });
+    };
 });
 
 //
@@ -952,8 +1013,8 @@ app.controller('TrashController', function($scope, SharedService) {
         // Bind file count into button
         $('#trash-btn-delete').attr('data-filecount', args.keys.length);
         // $scope.$apply(function() {
+            $scope.trash.count = args.keys.length;
             $scope.trash.button = 'Delete (' + args.keys.length + ')';
-            $scope.trash.title = args.bucket;
             $scope.trash.trashing = false;
         // });
 
