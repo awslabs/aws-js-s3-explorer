@@ -773,7 +773,7 @@ app.controller('UploadController', function($scope, SharedService) {
                 $('#upload-td-' + index).html('<div class="progress"><span id="upload-td-progress-' + index + '"' + ' class="progress-bar" style="min-width: 25px; width: 0%;" data-percent="0">0%</span></div>');
 
                 var s3 = new AWS.S3(AWS.config);
-                var params = {Body: file.file, Bucket: s3bucket, Key: (prefix ? prefix : '') + droppedFiles[index].file.name};
+                var params = {Body: file.file, Bucket: s3bucket, Key: (prefix ? prefix : '') + droppedFiles[index].file.name, ContentType: droppedFiles[index].file.type};
 
                 DEBUG.log("Upload params:", params);
                 s3.upload(params)
