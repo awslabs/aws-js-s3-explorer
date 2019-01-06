@@ -152,7 +152,7 @@ permissions and limitations under the License.
     <div id="AddFolderModal" class="modal fade" ng-controller="AddFolderController" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
-                <form name="add_folder_form" ng-submit="add_folder()">
+                <form name="add_folder_form" ng-submit="addFolder()">
                     <fieldset>
                         <div class="modal-header">
                             <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
@@ -162,8 +162,12 @@ permissions and limitations under the License.
                             <div class="col-md-18">
                                 <div class="panel panel-default">
                                     <div class="panel-body">
-                                        <p>Please enter the full path of the S3 folder to create e.g. wallpaper/animals/dogs/</p>
-                                        <input name="folder" ng-model="add_folder.entered_folder" type="text" class="form-control" placeholder="folder" ng-required="true"/>
+                                        <p>Please enter the relative path of the S3 folder to add, for example folder-01 or wallpaper/animals/dogs</p>
+                                        <div class="input-group bottom-marg-10">
+                                            <span class="input-group-addon">{{add_folder.view_prefix}}</span>
+                                            <input name="folder" ng-model="add_folder.entered_folder" type="text" class="form-control" placeholder="folder" ng-required="true"/>
+                                        </div>
+                                        <p>The new S3 folder will be {{add_folder.view_prefix}}{{add_folder.entered_folder}}.</p>
                                     </div>
                                 </div>
                             </div>
