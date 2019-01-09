@@ -52,6 +52,18 @@ permissions and limitations under the License.
         td {
             font: 12px "Lucida Grande", Helvetica, Arial, sans-serif;
         }
+
+        .title {
+            padding: 6px 12px;
+        }
+
+        .breadcrumb {
+            margin-bottom: 0;
+        }
+
+        #navbuttons .btn {
+            padding: 3px 6px;
+        }
     </style>
 </head>
 
@@ -64,48 +76,52 @@ permissions and limitations under the License.
             <div class="col-lg-12">
                 <div class="panel panel-primary">
 
-                    <!-- Panel including bucket/folder information and controls -->
+                    <!-- Panel including title, breadcrumbs, and controls -->
                     <div class="panel-heading clearfix">
-                        <!-- Bucket selection and breadcrumbs -->
+                        <!-- Title and breadcrumbs -->
                         <div class="btn-group pull-left">
-                            <div class="pull-left">
+                            <!-- App title -->
+                            <div class="title pull-left">
                                 AWS S3 Explorer&nbsp;
                             </div>
-                            <!-- Bucket selection -->
-                            <div class="btn pull-left" id="bucket">
-                                <i id="bucket-chooser" style="cursor: pointer;" class="fas fa-cog fa-2x" title="Switch to a different S3 Bucket"></i>
-                            </div>
                             <!-- Bucket breadcrumbs -->
-                            <div class="btn pull-right">
-                                <ul id="breadcrumb" class="btn breadcrumb pull-right">
-                                    <li class="active dropdown">
+                            <div class="pull-right">
+                                <ul id="breadcrumb" class="breadcrumb pull-right">
+                                    <li class="active">
                                         <a href="#">&lt;bucket&gt;</a>
                                     </li>
                                 </ul>
                             </div>
                         </div>
-                        <!-- Folder/Bucket radio group and progress spinner -->
-                        <div class="btn-group pull-right">
-                            <div class="checkbox pull-left">
-                                <label>
+                        <!-- Controls -->
+                        <div id="navbuttons" class="pull-right">
+                            <div>
+                                <!-- Hide folders checkbox -->
+                                <div class="btn-group">
+                                    <label class="btn">
                                         <input type="checkbox" id="hidefolders">&nbsp;Hide folders?
                                     </label>
+                                </div>
                                 <!-- Folder/Bucket radio group -->
                                 <div class="btn-group" data-toggle="buttons">
                                     <label class="btn btn-primary active" title="View all objects in folder">
-                                            <i class="fa fa-angle-double-up"></i>
-                                            <input type="radio" name="optionsdepth" value="folder" id="optionfolder" checked>&nbsp;Folder
-                                        </label>
+                                        <i class="fa fa-angle-double-up"></i>
+                                        <input type="radio" name="optionsdepth" value="folder" id="optionfolder" checked>&nbsp;Folder
+                                    </label>
                                     <label class="btn btn-primary" title="View all objects in bucket">
-                                            <i class="fa fa-angle-double-down"></i>
-                                            <input type="radio" name="optionsdepth" value="bucket" id="optionbucket">&nbsp;Bucket
-                                        </label>
+                                        <i class="fa fa-angle-double-down"></i>
+                                        <input type="radio" name="optionsdepth" value="bucket" id="optionbucket">&nbsp;Bucket
+                                    </label>
                                 </div>
-                            </div>
-                            <!-- Dual purpose: progress spinner and refresh button -->
-                            <div class="btn-group pull-right" id="refresh">
-                                <span id="bucket-loader" style="cursor: pointer;" class="btn fa fa-refresh fa-2x pull-left" title="Refresh"></span>
-                                <span id="badgecount" class="badge pull-right">42</span>
+                                <!-- Bucket selection -->
+                                <div class="btn-group" id="bucket">
+                                    <i id="bucket-chooser" style="cursor: pointer;" class="btn fa fa-cog fa-2x" title="Switch to a different S3 Bucket"></i>
+                                </div>
+                                <!-- Dual purpose: progress spinner and refresh button, plus object count -->
+                                <div class="btn-group" id="refresh">
+                                    <span id="bucket-loader" style="cursor: pointer;" class="btn fa fa-refresh fa-2x pull-left" title="Refresh"></span>
+                                    <span id="badgecount" class="badge pull-right" title="Object count">42</span>
+                                </div>
                             </div>
                         </div>
                     </div>
