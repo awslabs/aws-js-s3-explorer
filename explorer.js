@@ -179,7 +179,8 @@ app.controller('ViewController', function($scope, SharedService) {
                 window.open(target.href, '_blank');
             } else {
                 var s3 = new AWS.S3();
-                var params = {Bucket: $scope.view.settings.bucket, Key: target.dataset.s3key, Expires: 15};
+                var params = {Bucket: $scope.view.settings.bucket, Key: target.dataset.s3key, Expires: 15, RequestPayer:  $scope.view.settings.requestpayer};
+
                 DEBUG.log("params:", params);
                 s3.getSignedUrl('getObject', params, function (err, url) {
                     if (err) {
@@ -716,6 +717,7 @@ app.controller('SettingsController', function($scope, SharedService) {
     $scope.settings.mfa = { use: 'no', code: '' };
     $scope.settings.cred = { accessKeyId: '', secretAccessKey: '', sessionToken: '' };
     $scope.settings.stscred = null;
+    $scope.settings.requestpayer = null;
 
     // TODO: at present the Settings dialog closes after credentials have been supplied
     // even if the subsequent AWS calls fail with networking or permissions errors. It
