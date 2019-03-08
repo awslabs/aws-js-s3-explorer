@@ -128,7 +128,7 @@ app.factory('SharedService', function($rootScope) {
 
         // Head the bucket to get a Date response. The 'date' header will need
         // to be exposed in S3 CORS configuration.
-        s3.headBucket({Bucket: bucket}, function(err, data) {
+        s3.headBucket({Bucket: bucket, RequestPaymentConfiguration: { Payer: 'Requester' }}, function(err, data) {
             if (err) {
                 DEBUG.log("headBucket error:", err);
             } else {
@@ -179,7 +179,7 @@ app.controller('ViewController', function($scope, SharedService) {
                 window.open(target.href, '_blank');
             } else {
                 var s3 = new AWS.S3();
-                var params = {Bucket: $scope.view.settings.bucket, Key: target.dataset.s3key, Expires: 15, RequestPayer:  $scope.view.settings.requestpayer};
+                var params = {Bucket: $scope.view.settings.bucket, Key: target.dataset.s3key, Expires: 15,  RequestPayer: 'requester'};
 
                 DEBUG.log("params:", params);
                 s3.getSignedUrl('getObject', params, function (err, url) {
@@ -457,7 +457,7 @@ app.controller('ViewController', function($scope, SharedService) {
         }
 
         var s3 = new AWS.S3(AWS.config);
-        var params = { Bucket: bucket, Prefix: prefix, Delimiter: delimiter, Marker: marker };
+        var params = { Bucket: bucket, Prefix: prefix, Delimiter: delimiter, Marker: marker, RequestPayer: 'requester'};
 
         // DEBUG.log("AWS.config:", JSON.stringify(AWS.config));
 
