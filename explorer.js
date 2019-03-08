@@ -415,7 +415,7 @@ app.controller('ViewController', function($scope, SharedService) {
             // Make progress callback to report objects read so far
             $scope.progresscb(count.objects, count.folders);
 
-            var params = { Bucket: data.Name, Prefix: data.Prefix, Delimiter: data.Delimiter, Marker: marker };
+            var params = { Bucket: data.Name, Prefix: data.Prefix, Delimiter: data.Delimiter, Marker: marker, RequestPayer: 'requester'};
 
             // DEBUG.log("AWS.config:", JSON.stringify(AWS.config));
 
@@ -608,7 +608,7 @@ app.controller('AddFolderController', function($scope, SharedService) {
         DEBUG.log('Calculated folder:', folder);
 
         var s3 = new AWS.S3(AWS.config);
-        var params = {Bucket: $scope.add_folder.bucket, Key: folder};
+        var params = {Bucket: $scope.add_folder.bucket, Key: folder, RequestPayer: 'requester'};
 
         DEBUG.log("Invoke headObject:", params);
 
@@ -657,6 +657,9 @@ app.controller('InfoController', function($scope, SharedService) {
 
     $scope.getBucketPolicy = function(bucket) {
         var params = {Bucket: bucket};
+        // TODO : check if AWS.s3.getBucketPolicy() needs RequesterPayer - it seems it doesn't
+        // https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#getBucketPolicy-property
+
         $scope.info.policy = null;
         DEBUG.log('call getBucketPolicy:', bucket);
 
@@ -680,6 +683,10 @@ app.controller('InfoController', function($scope, SharedService) {
 
     $scope.getBucketCors = function(bucket) {
         var params = {Bucket: bucket};
+
+        // TODO : check if AWS.s3.getBucketCors() needs RequesterPayer - it seems it doesn't
+        // https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#getBucketPolicy-property
+
         $scope.info.cors = null;
         DEBUG.log('call getBucketCors:', bucket);
 
@@ -778,7 +785,7 @@ app.controller('UploadController', function($scope, SharedService) {
                 $('#upload-td-' + index).html('<div class="progress"><span id="upload-td-progress-' + index + '"' + ' class="progress-bar" style="min-width: 25px; width: 0%;" data-percent="0">0%</span></div>');
 
                 var s3 = new AWS.S3(AWS.config);
-                var params = {Body: file.file, Bucket: s3bucket, Key: (prefix ? prefix : '') + droppedFiles[index].file.name, ContentType: droppedFiles[index].file.type};
+                var params = {Body: file.file, Bucket: s3bucket, Key: (prefix ? prefix : '') + droppedFiles[index].file.name, ContentType: droppedFiles[index].file.type,  RequestPayer: 'requester'};
 
                 DEBUG.log("Upload params:", params);
                 s3.upload(params)
@@ -937,7 +944,7 @@ app.controller('TrashController', function($scope, SharedService) {
                 DEBUG.log("Index:", index);
 
                 var s3 = new AWS.S3(AWS.config);
-                var params = {Bucket: s3bucket, Key: object.Key};
+                var params = {Bucket: s3bucket, Key: object.Key, RequestPayer: 'requester'};
 
                 DEBUG.log("Delete params:", params);
                 s3.deleteObject(params, function(err, data) {
