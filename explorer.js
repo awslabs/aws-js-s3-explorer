@@ -286,7 +286,7 @@ app.controller('ViewController', function($scope, SharedService) {
             DEBUG.log('running, stop');
             $scope.listobjectsstop();
         } else {
-            DEBUG.log('refresh', $scope.view.settings.bucket, $scope.view.settings.prefix, $scope.view.settings.delimiter);
+            DEBUG.log('refresh', $scope.view.settings);
             $scope.view.objectCount = 0;
             $scope.folder2breadcrumbs($scope.view.settings.bucket, SharedService.getViewPrefix());
             $scope.listobjects($scope.view.settings.bucket, $scope.view.settings.prefix, $scope.view.settings.delimiter);
@@ -582,30 +582,32 @@ app.controller('ViewController', function($scope, SharedService) {
 app.controller('AddFolderController', function($scope, SharedService) {
 
     DEBUG.log("AddFolderController init");
-    $scope.add_folder = {  settings: null, bucket: null, entered_folder: '' };
+    $scope.add_folder = {  settings: null, bucket: null, entered_folder: '', view_prefix: '/' };
     window.addFolderScope = $scope; // for debugging
+    DEBUG.log('AddFolderController add_folder init', $scope.add_folder);
 
     $scope.$on('broadcastChangeSettings', function(e, args) {
         DEBUG.log('AddFolderController', 'broadcast change settings bucket:', args.settings.bucket);
         $scope.add_folder.settings = args.settings;
         $scope.add_folder.bucket = args.settings.bucket;
+        DEBUG.log('AddFolderController add_folder bcs', $scope.add_folder);
     });
 
-    $scope.add_folder = function() {
+    $scope.$on('broadcastChangePrefix', function(e, args) {
+        DEBUG.log('AddFolderController', 'broadcast change prefix args:', args);
+        $scope.add_folder.view_prefix = args.prefix || args.viewprefix || '/';
+        DEBUG.log('AddFolderController add_folder bcp', $scope.add_folder);
+    });
+
+    $scope.addFolder = function() {
         DEBUG.log('Add folder');
+        DEBUG.log('Current prefix:', $scope.add_folder.view_prefix);
 
-        // Folder key cannot start with /
-        while ($scope.add_folder.entered_folder.startsWith('/')) {
-            $scope.add_folder.entered_folder = $scope.add_folder.entered_folder.substring(1);
-        }
-
-        // Folder key must end with /
-        if (!$scope.add_folder.entered_folder.endsWith('/')) {
-            $scope.add_folder.entered_folder += '/';
-        }
+        var folder = stripLeadTrailSlash($scope.add_folder.view_prefix + stripLeadTrailSlash($scope.add_folder.entered_folder)) + '/';
+        DEBUG.log('Calculated folder:', folder);
 
         var s3 = new AWS.S3(AWS.config);
-        var params = {Bucket: $scope.add_folder.bucket, Key: $scope.add_folder.entered_folder};
+        var params = {Bucket: $scope.add_folder.bucket, Key: folder};
 
         DEBUG.log("Invoke headObject:", params);
 
@@ -622,6 +624,7 @@ app.controller('AddFolderController', function($scope, SharedService) {
                     } else {
                         SharedService.addFolder(params.Bucket, params.Key);
                         $('#AddFolderModal').modal('hide');
+                        $scope.add_folder.entered_folder = '';
                     }
                 });
             } else if (err) {
@@ -773,7 +776,7 @@ app.controller('UploadController', function($scope, SharedService) {
                 $('#upload-td-' + index).html('<div class="progress"><span id="upload-td-progress-' + index + '"' + ' class="progress-bar" style="min-width: 25px; width: 0%;" data-percent="0">0%</span></div>');
 
                 var s3 = new AWS.S3(AWS.config);
-                var params = {Body: file.file, Bucket: s3bucket, Key: (prefix ? prefix : '') + droppedFiles[index].file.name};
+                var params = {Body: file.file, Bucket: s3bucket, Key: (prefix ? prefix : '') + droppedFiles[index].file.name, ContentType: droppedFiles[index].file.type};
 
                 DEBUG.log("Upload params:", params);
                 s3.upload(params)
@@ -1101,6 +1104,12 @@ function object2hrefpath(bucket, key) {
 
 function isfolder(path) {
     return path.endsWith('/');
+}
+
+function stripLeadTrailSlash(s) {
+    while (s.startsWith('/')) s = s.substring(1);
+    while (s.endsWith('/')) s = s.substring(0, s.length - 1);
+    return s;
 }
 
 function showError(objects) {
