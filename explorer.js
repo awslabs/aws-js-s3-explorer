@@ -26,6 +26,7 @@ var mapStorage = {
     ONEZONE_IA: 'One Zone-IA',
     REDUCED_REDUNDANCY: 'Reduced redundancy',
     GLACIER: 'Glacier',
+    INTELLIGENT_TIERING: 'Intelligent Tiering',
     DEEP_ARCHIVE: 'Deep Archive'
 };
 
