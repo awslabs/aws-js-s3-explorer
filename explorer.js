@@ -25,7 +25,9 @@ var mapStorage = {
     STANDARD_IA: 'Standard IA',
     ONEZONE_IA: 'One Zone-IA',
     REDUCED_REDUNDANCY: 'Reduced redundancy',
-    GLACIER: 'Glacier'
+    GLACIER: 'Glacier',
+    INTELLIGENT_TIERING: 'Intelligent Tiering',
+    DEEP_ARCHIVE: 'Deep Archive'
 };
 
 var app = angular.module('aws-js-s3-explorer', []);
