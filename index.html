@@ -130,6 +130,13 @@ permissions and limitations under the License.
                                             <span class="input-group-addon">Initial Prefix</span>
                                             <input name="prefix" type="text" ng-model="settings.prefix" class="form-control" placeholder="prefix e.g. songs/"/>
                                         </div>
+                                        <div class="input-group bottom-marg-10">
+                                            <span class="input-group-addon">Request Payer</span>
+                                            <select name="region" class="form-control" ng-model="settings.requestpayer">
+                                                <option value="">Bucket owner pays</option>
+                                                <option value="requester">Requester pays</option>
+                                            </select>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
