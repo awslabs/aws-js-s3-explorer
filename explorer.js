@@ -478,7 +478,7 @@ app.controller('ViewController', function($scope, SharedService) {
 
     // Individual render functions so that we can control how column data appears
     renderSelect = function(data, type, full) {
-        return (type == 'display' && !full.CommonPrefix) ? '<span class="text-center"><input type="checkbox"></span>' : '';
+        return (type == 'display') ? '<span class="text-center"><input type="checkbox"></span>' : '';
     };
 
     renderObject = function(data, type, full) {
@@ -921,7 +921,7 @@ app.controller('TrashController', function($scope, SharedService) {
     //
     // Delete a list of objects from the provided S3 bucket
     //
-    $scope.deleteFiles = function(s3bucket, objects) {
+    $scope.deleteFiles = function(s3bucket, objects, recursion) {
         DEBUG.log("Delete files:", objects);
 
         $scope.$apply(function() {
@@ -937,25 +937,55 @@ app.controller('TrashController', function($scope, SharedService) {
                 DEBUG.log("Index:", index);
 
                 var s3 = new AWS.S3(AWS.config);
+                if (isfolder(object.Key) && SharedService.settings.delimiter) {
+                    s3.listObjects({ Bucket: s3bucket, Prefix: object.Key }, function(err, data) {
+                        if (err) {
+                            if (!recursion) {
+                                // AccessDenied is a normal consequence of lack of permission
+                                // and we do not treat this as completely unexpected
+                                if (err.code === 'AccessDenied') {
+                                    $('#trash-td-' + index).html('<span class="trasherror">Access Denied</span>');
+                                } else {
+                                    DEBUG.log(JSON.stringify(err));
+                                    $('#trash-td-' + index).html('<span class="trasherror">Failed:&nbsp' + err.code + '</span>');
+                                    showError([params, err]);
+                                }
+                            } else {
+                                DEBUG.log(JSON.stringify(err));
+                                showError([params, err]);
+                            }
+                        } else {
+                            if (data.Contents.length > 0) $scope.deleteFiles(s3bucket, data.Contents, true);
+                        }
+                    });
+                };
+
                 var params = {Bucket: s3bucket, Key: object.Key};
 
                 DEBUG.log("Delete params:", params);
                 s3.deleteObject(params, function(err, data) {
                     if (err) {
-                        // AccessDenied is a normal consequence of lack of permission
-                        // and we do not treat this as completely unexpected
-                        if (err.code === 'AccessDenied') {
-                            $('#trash-td-' + index).html('<span class="trasherror">Access Denied</span>');
+                        if (!recursion) {
+                            // AccessDenied is a normal consequence of lack of permission
+                            // and we do not treat this as completely unexpected
+                            if (err.code === 'AccessDenied') {
+                                $('#trash-td-' + index).html('<span class="trasherror">Access Denied</span>');
+                            } else {
+                                DEBUG.log(JSON.stringify(err));
+                                $('#trash-td-' + index).html('<span class="trasherror">Failed:&nbsp' + err.code + '</span>');
+                                showError([params, err]);
+                            }
                         } else {
                             DEBUG.log(JSON.stringify(err));
-                            $('#trash-td-' + index).html('<span class="trasherror">Failed:&nbsp' + err.code + '</span>');
                             showError([params, err]);
                         }
                     } else {
                         DEBUG.log("Deleted", object.Key, "from", s3bucket);
                         var count = $('#trash-btn-delete').attr('data-filecount');
-                        $('#trash-td-' + index).html('<span class="trashdeleted">Deleted</span>');
-                        $('#trash-btn-delete').attr('data-filecount', --count);
+                        if (!recursion) {
+                            $('#trash-td-' + index).html('<span class="trashdeleted">Deleted</span>');
+                            $('#trash-btn-delete').attr('data-filecount', --count);
+                        }
                         // $('#trash-btn-delete').text('Delete (' + count + ')');
                         $scope.$apply(function() {
                             $scope.trash.button = 'Delete (' + count + ')';
@@ -965,8 +995,8 @@ app.controller('TrashController', function($scope, SharedService) {
                         if (count === 0) {
                             $('#trash-btn-delete').hide();
                             $('#trash-btn-cancel').text('Close');
-                            SharedService.viewRefresh();
                         }
+                        SharedService.viewRefresh();
                     }
                 });
 
@@ -985,12 +1015,12 @@ app.controller('TrashController', function($scope, SharedService) {
 
             var td = [
                 $('<td>').append(ii+1),
-                $('<td>').append(fullpath2filename(obj.Key)),
-                $('<td>').append(fullpath2pathname(obj.Key)),
-                $('<td>').append(moment(obj.LastModified).fromNow()),
+                $('<td>').append(isfolder(obj.Key) ? prefix2folder(obj.Key) : fullpath2filename(obj.Key)),
+                $('<td>').append(isfolder(obj.Key) ? prefix2parentfolder(obj.Key) : fullpath2pathname(obj.Key)),
+                $('<td>').append(isfolder(obj.Key) ? '' : moment(obj.LastModified).fromNow()),
                 $('<td>').append(obj.LastModified ? moment(obj.LastModified).local().format('YYYY-MM-DD HH:mm:ss') : ""),
-                $('<td>').append(mapStorage[obj.StorageClass]),
-                $('<td>').append(bytesToSize(obj.Size)),
+                $('<td>').append(isfolder(obj.Key) ? '' : mapStorage[obj.StorageClass]),
+                $('<td>').append(isfolder(obj.Key) ? '' : bytesToSize(obj.Size)),
                 $('<td>').attr('id', 'trash-td-' + ii).append($('<i>').append('n/a'))
             ];
 
