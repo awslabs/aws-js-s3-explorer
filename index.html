@@ -156,7 +156,7 @@ permissions and limitations under the License.
                     <fieldset>
                         <div class="modal-header">
                             <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                            <h4 class="modal-title">S3 Explorer: Add Folder</h4>
+                            <h4 class="modal-title">S3 Explorer: New Folder</h4>
                         </div>
                         <div class="modal-body">
                             <div class="col-md-18">
@@ -411,7 +411,7 @@ Please see the project <a target="_blank" href="https://github.com/awslabs/aws-j
                             <div>
                                 <!-- Info/Refresh/Settings buttons -->
                                 <div class="btn-group">
-                                    <span id="bucket-plus" style="cursor: pointer;" class="btn fa fa-folder-plus fa-2x" title="Add folder" data-target="#AddFolderModal" data-toggle="modal"></span>
+                                    <span id="bucket-plus" style="cursor: pointer;" class="btn fa fa-folder-plus fa-2x" ng-hide="!view.settings" title="New folder" data-target="#AddFolderModal" data-toggle="modal"></span>
                                     <span id="bucket-trash" style="cursor: pointer;" class="btn fa fa-trash-alt fa-2x" title="Delete {{view.keys_selected.length}} selected object(s)" ng-hide="!view.settings || !view.keys_selected.length" ng-disabled="!view.keys_selected.length" ng-click="trash()"></span>
                                     <span id="bucket-info" style="cursor: pointer;" class="btn fa fa-info-circle fa-2x" title="Info" data-target="#InfoModal" data-toggle="modal"></span>
                                     <span id="bucket-loader" style="cursor: pointer;" class="btn fa fa-sync fa-2x" ng-hide="!view.settings" ng-click="refresh()" title="Refresh"></span>
