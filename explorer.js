@@ -295,6 +295,11 @@ app.controller('ViewController', function($scope, SharedService) {
         }
     };
 
+    $scope.upload = function() {
+        DEBUG.log('Add files');
+        $('#addedFiles').trigger('click');
+    };
+
     $scope.trash = function() {
         DEBUG.log('Trash:', $scope.view.keys_selected);
         if ($scope.view.keys_selected.length > 0) {
@@ -847,7 +852,7 @@ app.controller('UploadController', function($scope, SharedService) {
 
                 var droppedFiles = [];
                 var fileIndex = droppedFiles.length;
-                var files = e.originalEvent.dataTransfer.files;
+                var files = e.hasOwnProperty('originalEvent') ? e.originalEvent.dataTransfer.files : SharedService.added_files;
 
                 for (var ii = 0; ii < files.length; ii++) {
                     var fileii = files[ii];
@@ -900,6 +905,12 @@ app.controller('UploadController', function($scope, SharedService) {
                     $scope.upload.uploading = false;
                });
 
+                // Reset files selector
+                if (SharedService.hasOwnProperty('added_files')) {
+                    delete SharedService.added_files;
+                    $('#addedFiles').val('');
+                }
+
                 // Launch the uploader modal
                 $('#UploadModal').modal({ keyboard: true, backdrop: 'static' });
             });
@@ -907,6 +918,13 @@ app.controller('UploadController', function($scope, SharedService) {
 
     // Enable dropzone behavior and highlighting
     $scope.dropZone($('.dropzone'));
+
+    // Simulate drop event on change of files selector
+    $('#addedFiles').on('change', function(e) {
+        SharedService.added_files = e.target.files;
+        $('.dropzone').trigger('drop');
+    });
+
 });
 
 //
