@@ -58,10 +58,12 @@ td {
     margin-bottom: 0;
 }
 
+/*
 .dropzone {
-    /*border: 1px dashed #0088CC;*/
-    /*border-radius: 5px;*/
+    border: 1px dashed #0088CC;
+    border-radius: 5px;
 }
+*/
 
 .dropzone.dragover {
     /*border: 1px solid #0088CC;*/
@@ -124,9 +126,11 @@ table.dataTable tbody tr {
     border-top: 3px solid white;
 }
 
+/*
 .alert tr:nth-child(even) {
-    /*background: ckground: rgb(249, 228, 130);*/
+    background: ckground: rgb(249, 228, 130);
 }
+*/
 
 .alert th {
     background: rgb(65, 62, 61);
@@ -152,4 +156,9 @@ table.dataTable tbody tr {
 
 .alert table {
     color: #000000;
+}
+
+.progress-bar {
+    min-width: 25px;
+    width: 0%;
 }

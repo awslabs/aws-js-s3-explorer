@@ -208,7 +208,7 @@ permissions and limitations under the License.
                                 <br/>
                                 <p>Amazon S3 Explorer is an application that uses the AWS JavaScript SDK in the Browser to make the contents of an S3 bucket easy to view in a web browser.</p>
                                 <p>To upload files, first navigate to the bucket &amp; folder of your choice and then drag &amp; drop files onto the main S3 Explorer table.</p>
-                                <p>To delete files, first choose the files you want to delete by clicking checkboxes in the Select column, then click the Trash icon.</p>
+                                <p>To delete files, first choose the files you want to delete by clicking checkboxes in the Select column, then click the Trash icon. You will be asked to confirm this action.</p>
                                 <p>For more details and to download the source code, see our <a target="_blank" href="https://github.com/awslabs/aws-js-s3-explorer">GitHub page</a>.</p>
                             </div>
                             <div class="tab-pane" id="cors" ng-hide="!info.cors">
@@ -329,7 +329,7 @@ Please see the project <a target="_blank" href="https://github.com/awslabs/aws-j
                     <div class="form-group">
                         <div class="col-sm-offset-2 col-sm-10">
                             <button id="trash-btn-cancel" type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-                            <button id="trash-btn-delete" type="submit" class="btn btn-danger" ng-disabled="trash.trashing"><i class="fa fa-trash-o fa-lg"></i>&nbsp;{{trash.button}}</button>
+                            <button id="trash-btn-delete" type="submit" class="btn btn-danger" ng-disabled="trash.trashing"><i class="fa fa-trash-alt fa-lg"></i>&nbsp;{{trash.button}}</button>
                         </div>
                     </div>
                 </div>
@@ -364,10 +364,20 @@ Please see the project <a target="_blank" href="https://github.com/awslabs/aws-j
                                         <th>Progress</th>
                                     </tr>
                                 </thead>
-                                <tbody id="upload-tbody"></tbody>
+                                <tbody id="upload-tbody">
+                                    <tr ng-repeat="file in upload.files">
+                                        <td>{{$index + 1}}</td>
+                                        <td>{{file.name}}</td>
+                                        <td>{{file.type}}</td>
+                                        <td>{{file.size}}</td>
+                                        <td id="upload-td-{{$index}}">
+                                            <span id="upload-td-progress-{{$index}}" class="progress-bar" data-percent="0"></span>
+                                        </td>
+                                    </tr>
+                                </tbody>
                             </table>
                             <p>
-                            The selected files will be uploaded to {{upload.title}}.
+                            The selected files will be uploaded to {{upload.title}}
                             </p>
                         </div>
                     </div>
@@ -410,7 +420,7 @@ Please see the project <a target="_blank" href="https://github.com/awslabs/aws-j
                         </div>
 
                         <!-- Folder/Bucket radio group and progress spinner -->
-                        <div id="navbuttons" class="pull-right hide">
+                        <div id="navbuttons" class="pull-right hidden">
                             <div>
                                 <!-- Info/Refresh/Settings buttons -->
                                 <div class="btn-group">
@@ -435,7 +445,7 @@ Please see the project <a target="_blank" href="https://github.com/awslabs/aws-j
 
                     <!-- Alert to show any errors -->
                     <div id="alert-error" class="alert alert-danger hide" role="alert">
-                        <button type="button" class="close" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        <button type="button" class="close" data-hide="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                         <p><strong>Error:</strong> An error was detected. Details are below.</p>
                         <br/>
                         <table class="table" id="alert-table">
@@ -452,7 +462,7 @@ Please see the project <a target="_blank" href="https://github.com/awslabs/aws-j
 
                     <!-- Panel including S3 object table -->
                     <div class="panel-body">
-                        <table class="table table-bordered table-hover table-striped" id="s3objects-table">
+                        <table class="table table-bordered table-hover table-striped" style="width:100%" id="s3objects-table">
                             <thead>
                                 <tr>
                                     <th class="text-center">Select</th>
@@ -480,7 +490,7 @@ Please see the project <a target="_blank" href="https://github.com/awslabs/aws-j
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js" integrity="sha384-vhJnz1OVIdLktyixHY4Uk3OHEwdQqPppqYR8+5mjsauETgLOcEynD9oPHhhz18Nw" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.7.5/angular.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootbox.js/4.4.0/bootbox.min.js"></script>
-<script src="https://sdk.amazonaws.com/js/aws-sdk-2.207.0.min.js"></script>
+<script src="https://sdk.amazonaws.com/js/aws-sdk-2.437.0.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.0/moment.min.js"></script>
 <script src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.10.19/js/dataTables.bootstrap.min.js"></script>

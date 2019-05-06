@@ -1,0 +1,6 @@
+{
+  "extends": ["eslint:recommended", "airbnb"],
+  "rules": {
+    "indent": ["error", 4]
+  }
+}
