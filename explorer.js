@@ -75,7 +75,6 @@ function prefix2folder(prefix) {
 }
 
 // Convert cars/vw/sedans/ to cars/vw/
-// eslint-disable-next-line no-unused-vars
 function prefix2parentfolder(prefix) {
     const parts = prefix.split('/');
     parts.splice(parts.length - 2, 1);
@@ -101,29 +100,6 @@ function isfolder(path) {
 
 function stripLeadTrailSlash(s) {
     return s.replace(/^\/+/g, '').replace(/\/+$/g, '');
-}
-
-function showError(params, err) {
-    $('#alert-tbody tr').remove();
-
-    DEBUG.log(err);
-
-    Object.keys(err).forEach((key) => {
-        DEBUG.log(key);
-        DEBUG.log(err[key]);
-        const val = err[key] ? err[key] : 'n/a';
-
-        const td = [
-            $('<td>').append(key),
-            $('<td>').append(val),
-        ];
-
-        const tr = $('<tr>');
-        tr.append(td[0]).append(td[1]);
-        $('#alert-tbody').append(tr);
-    });
-
-    $('#alert-error').removeClass('hide');
 }
 
 //
@@ -255,6 +231,17 @@ function SharedService($rootScope) {
         });
     };
 
+    // Common error handling is done here in the shared service.
+    shared.showError = (params, err) => {
+        DEBUG.log(err);
+        const { message, code } = err;
+        const errors = Object.entries(err).map(([key, value]) => ({ key, value }));
+        const args = {
+            params, message, code, errors,
+        };
+        $rootScope.$broadcast('broadcastError', args);
+    };
+
     return shared;
 }
 
@@ -299,7 +286,7 @@ function ViewController($scope, SharedService) {
             s3.getSignedUrl('getObject', params, (err, url) => {
                 if (err) {
                     DEBUG.log('err:', err);
-                    showError(params, err);
+                    SharedService.showError(params, err);
                 } else {
                     DEBUG.log('url:', url);
                     window.open(url, '_blank');
@@ -488,7 +475,8 @@ function ViewController($scope, SharedService) {
             DEBUG.log('Error:', JSON.stringify(err));
             DEBUG.log('Error:', err.stack);
             $bl.removeClass('fa-spin');
-            showError({ bucket: $scope.view.bucket, prefix: $scope.view.prefix }, err);
+            const params = { bucket: $scope.view.bucket, prefix: $scope.view.prefix };
+            SharedService.showError(params, err);
         } else {
             let marker;
 
@@ -980,7 +968,7 @@ function UploadController($scope, SharedService) {
                     } else {
                         DEBUG.log(JSON.stringify(err));
                         $(`#upload-td-${ii}`).html(`<span class="uploaderror">Failed:&nbsp${err.code}</span>`);
-                        showError(params, err);
+                        SharedService.showError(params, err);
                     }
                 } else {
                     DEBUG.log('Uploaded', file.file.name, 'to', data.Location);
@@ -1093,6 +1081,29 @@ function UploadController($scope, SharedService) {
 }
 
 //
+// ErrorController: code associated with displaying runtime errors.
+//
+function ErrorController($scope) {
+    DEBUG.log('ErrorController init');
+    window.errorScope = $scope; // for debugging
+    $scope.error = {
+        errors: [], message: '',
+    };
+
+    $scope.$on('broadcastError', (e, args) => {
+        DEBUG.log('ErrorController', 'broadcast error', args);
+
+        $scope.$apply(() => {
+            Object.assign($scope.error, args);
+            DEBUG.log('scope errors', $scope.error.errors);
+        });
+
+        // Launch the error modal
+        $('#ErrorModal').modal({ keyboard: true, backdrop: 'static' });
+    });
+}
+
+//
 // TrashController: code associated with the Trash modal where the user can
 // delete objects.
 //
@@ -1137,11 +1148,11 @@ function TrashController($scope, SharedService) {
                             } else {
                                 DEBUG.log(JSON.stringify(err));
                                 $(`#trash-td-${ii}`).html(`<span class="trasherror">Failed:&nbsp${err.code}</span>`);
-                                showError([params, err]);
+                                SharedService.showError(params, err);
                             }
                         } else {
                             DEBUG.log(JSON.stringify(err));
-                            showError([params, err]);
+                            SharedService.showError(params, err);
                         }
                     } else if (data.Contents.length > 0) {
                         $scope.deleteFiles(Bucket, data.Contents, true);
@@ -1162,11 +1173,11 @@ function TrashController($scope, SharedService) {
                         } else {
                             DEBUG.log(JSON.stringify(err));
                             $(`#trash-td-${ii}`).html(`<span class="trasherror">Failed:&nbsp${err.code}</span>`);
-                            showError([params, err]);
+                            SharedService.showError(params, err);
                         }
                     } else {
                         DEBUG.log(JSON.stringify(err));
-                        showError([params, err]);
+                        SharedService.showError(params, err);
                     }
                 } else {
                     DEBUG.log('Deleted', objects[ii].Key, 'from', Bucket);
@@ -1246,6 +1257,7 @@ function TrashController($scope, SharedService) {
 // Create Angular module and attach factory and controllers
 angular.module('aws-js-s3-explorer', [])
     .factory('SharedService', SharedService)
+    .controller('ErrorController', ErrorController)
     .controller('ViewController', ViewController)
     .controller('AddFolderController', AddFolderController)
     .controller('InfoController', InfoController)

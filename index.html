@@ -337,6 +337,53 @@ Please see the project <a target="_blank" href="https://github.com/awslabs/aws-j
         </div>
     </div>
 
+    <!-- Error modal -->
+    <div id="ErrorModal" class="modal fade" ng-controller="ErrorController" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title">S3 Explorer: Error ({{error.code}})</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="col-md-18">
+                        <div class="panel-body">
+                            <p>An error was detected: {{error.message}}</p>
+                            <div class="collapse" id="collapseAdvanced">
+                                <div class="well-sm">
+                                    <table class="table table-bordered table-hover table-striped" id="error-table">
+                                        <thead id="error-thead">
+                                            <tr>
+                                                <th>#</th>
+                                                <th>Key</th>
+                                                <th>Value</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="error-tbody">
+                                            <tr ng-repeat="e in error.errors">
+                                                <td>{{$index + 1}}</td>
+                                                <td>{{e.key}}</td>
+                                                <td>{{e.value}}</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <div class="form-group">
+                        <div class="col-sm-offset-2 col-sm-10">
+                            <button type="button" class="btn btn-default" data-toggle="collapse" data-target="#collapseAdvanced" aria-expanded="false" aria-controls="collapseAdvanced"><i class="fa fa-cog" aria-hidden="true">&nbsp;</i>Advanced</button>
+                            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Hidden selector for adding files -->
     <input id="addedFiles" type="file" ng-hide="true" multiple/>
 
@@ -441,23 +488,6 @@ Please see the project <a target="_blank" href="https://github.com/awslabs/aws-j
                                 </div>
                             </div>
                         </div>
-                    </div>
-
-                    <!-- Alert to show any errors -->
-                    <div id="alert-error" class="alert alert-danger hide" role="alert">
-                        <button type="button" class="close" data-hide="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                        <p><strong>Error:</strong> An error was detected. Details are below.</p>
-                        <br/>
-                        <table class="table" id="alert-table">
-                            <thead>
-                                <tr>
-                                    <th>Key</th>
-                                    <th>Value</th>
-                                </tr>
-                            </thead>
-                            <tbody id="alert-tbody">
-                            </tbody>
-                        </table>
                     </div>
 
                     <!-- Panel including S3 object table -->
