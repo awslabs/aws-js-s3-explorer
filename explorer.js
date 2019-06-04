@@ -134,12 +134,15 @@ function SharedService($rootScope) {
         DEBUG.log('SharedService::changeSettings settings', settings);
 
         if ('URLSearchParams' in window) {
+            // store settings in query parameter
+            // create a deep copy and redact sensitive information
+            const settingsCopy = JSON.parse(JSON.stringify(settings));
+            settingsCopy.cred.secretAccessKey = "";
+            settingsCopy.cred.sessionToken = "";
+            settingsCopy.mfa.code = "";
+
             const searchParams = new URLSearchParams(window.location.search)
-            var secret = settings.cred.secretAccessKey;
-            settings.cred.secretAccessKey = "";
-            searchParams.set("settings", btoa(JSON.stringify(settings)));
-            settings.cred.secretAccessKey = secret;
-            secret = null;
+            searchParams.set("settings", btoa(JSON.stringify(settingsCopy)));
             const newRelativePathQuery = window.location.pathname + '?' + searchParams.toString();
             history.replaceState(null, '', newRelativePathQuery);
         }
