@@ -102,6 +102,13 @@ function stripLeadTrailSlash(s) {
     return s.replace(/^\/+/g, '').replace(/\/+$/g, '');
 }
 
+// Get a url query string value for key
+function qs(key) {
+    key = key.replace(/[*+?^$.\[\]{}()|\\\/]/g, "\\$&"); // escape RegEx meta chars
+    var match = location.search.match(new RegExp("[?&]"+key+"=([^&]+)(&|$)"));
+    return match && decodeURIComponent(match[1].replace(/\+/g, " "));
+}
+
 //
 // Shared service that all controllers can use
 //
@@ -874,9 +881,22 @@ function SettingsController($scope, SharedService) {
 
     // Initialized for an unauthenticated user exploring the current bucket
     // TODO: calculate current bucket and initialize below
-    $scope.settings = {
+
+    const defaultSettings = {
         auth: 'anon', region: '', bucket: '', entered_bucket: '', selected_bucket: '', view: 'folder', delimiter: '/', prefix: '',
     };
+    $scope.settings = defaultSettings;
+
+    const encodedSettings = qs('settings');
+
+    if(encodedSettings){
+        const settingsJSON = atob(encodedSettings);
+        const settingsObj = JSON.parse(settingsJSON);
+        // merge loaded settings with defaults
+        // todo check whether ES6 features are allowed (spread operator)
+        $scope.settings = { ...$scope.settings, ...settingsObj };
+    }
+
     $scope.settings.mfa = { use: 'no', code: '' };
     $scope.settings.cred = { accessKeyId: '', secretAccessKey: '', sessionToken: '' };
     $scope.settings.stscred = null;
