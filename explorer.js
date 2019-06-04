@@ -133,6 +133,13 @@ function SharedService($rootScope) {
         DEBUG.log('SharedService::changeSettings');
         DEBUG.log('SharedService::changeSettings settings', settings);
 
+        if ('URLSearchParams' in window) {
+            const searchParams = new URLSearchParams(window.location.search)
+            searchParams.set("settings", btoa(JSON.stringify(settings)));
+            const newRelativePathQuery = window.location.pathname + '?' + searchParams.toString();
+            history.replaceState(null, '', newRelativePathQuery);
+        }
+
         this.settings = settings;
         this.viewprefix = null;
         $.fn.dataTableExt.afnFiltering.length = 0;
@@ -885,6 +892,11 @@ function SettingsController($scope, SharedService) {
     const defaultSettings = {
         auth: 'anon', region: '', bucket: '', entered_bucket: '', selected_bucket: '', view: 'folder', delimiter: '/', prefix: '',
     };
+
+    defaultSettings.mfa = { use: 'no', code: '' };
+    defaultSettings.cred = { accessKeyId: '', secretAccessKey: '', sessionToken: '' };
+    defaultSettings.stscred = null;
+
     $scope.settings = defaultSettings;
 
     const encodedSettings = qs('settings');
@@ -892,14 +904,8 @@ function SettingsController($scope, SharedService) {
     if(encodedSettings){
         const settingsJSON = atob(encodedSettings);
         const settingsObj = JSON.parse(settingsJSON);
-        // merge loaded settings with defaults
-        // todo check whether ES6 features are allowed (spread operator)
-        $scope.settings = { ...$scope.settings, ...settingsObj };
+        $scope.settings = settingsObj;
     }
-
-    $scope.settings.mfa = { use: 'no', code: '' };
-    $scope.settings.cred = { accessKeyId: '', secretAccessKey: '', sessionToken: '' };
-    $scope.settings.stscred = null;
 
     // TODO: at present the Settings dialog closes after credentials have been supplied
     // even if the subsequent AWS calls fail with networking or permissions errors. It
