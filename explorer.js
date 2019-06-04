@@ -135,7 +135,11 @@ function SharedService($rootScope) {
 
         if ('URLSearchParams' in window) {
             const searchParams = new URLSearchParams(window.location.search)
+            var secret = settings.cred.secretAccessKey;
+            settings.cred.secretAccessKey = "";
             searchParams.set("settings", btoa(JSON.stringify(settings)));
+            settings.cred.secretAccessKey = secret;
+            secret = null;
             const newRelativePathQuery = window.location.pathname + '?' + searchParams.toString();
             history.replaceState(null, '', newRelativePathQuery);
         }
