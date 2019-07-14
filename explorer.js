@@ -62,7 +62,7 @@ function fullpath2filename(path) {
     return path.replace(/^.*[\\/]/, '');
 }
 
-// Convert cars/vw/golf.png to cars/vw
+// Convert cars/vw/golf.png to cars/vw/
 function fullpath2pathname(path) {
     const index = path.lastIndexOf('/');
     return index === -1 ? '/' : path.substring(0, index + 1);
@@ -79,6 +79,17 @@ function prefix2parentfolder(prefix) {
     const parts = prefix.split('/');
     parts.splice(parts.length - 2, 1);
     return parts.join('/');
+}
+
+// Convert cars/vw/golf.png to  cars/.../golf.png
+const pathLimit = 80; // Max allowed path length
+const pathHellip = String.fromCharCode(8230); // '&hellip;' char
+function path2short(path) {
+    if (path.length < pathLimit) return path;
+    const soft = `${prefix2parentfolder(fullpath2pathname(path)) + pathHellip}/${fullpath2filename(path)}`;
+    if (soft.length < pathLimit && soft.length > 2) return soft;
+    const hard = `${path.substring(0, path.indexOf('/') + 1) + pathHellip}/${fullpath2filename(path)}`;
+    return hard.length < pathLimit ? hard : path.substring(0, pathLimit) + pathHellip;
 }
 
 // Virtual-hosted-style URL, ex: https://mybucket1.s3.amazonaws.com/index.html
@@ -946,7 +957,7 @@ function UploadController($scope, SharedService) {
 
             const s3 = new AWS.S3(AWS.config);
             const params = {
-                Body: file.file, Bucket, Key: (prefix || '') + file.file.name, ContentType: file.file.type,
+                Body: file.file, Bucket, Key: (prefix || '') + (file.file.fullPath ? file.file.fullPath : file.file.name), ContentType: file.file.type,
             };
 
             const funcprogress = (evt) => {
@@ -995,6 +1006,61 @@ function UploadController($scope, SharedService) {
         });
     };
 
+    // Wrap readEntries in a promise to make working with readEntries easier
+    async function readEntriesPromise(directoryReader) {
+        try {
+            return await new Promise((resolve, reject) => {
+                directoryReader.readEntries(resolve, reject);
+            });
+        } catch (err) {
+            DEBUG.log(err);
+        }
+    }
+
+    // Get all the entries (files or sub-directories) in a directory
+    // by calling readEntries until it returns empty array
+    async function readAllDirectoryEntries(directoryReader) {
+        const entries = [];
+        let readEntries = await readEntriesPromise(directoryReader);
+        while (readEntries.length > 0) {
+            entries.push(...readEntries);
+            readEntries = await readEntriesPromise(directoryReader);
+        }
+        return entries;
+    }
+
+    // Retrieve File object from FileEntry
+    async function filePromise(fileEntry) {
+        try {
+            return await new Promise((resolve, reject) => {
+                fileEntry.file(resolve, reject);
+            });
+        } catch (err) {
+            DEBUG.log(err);
+        }
+    }
+
+    // Get all files recursively
+    async function getAllFileEntries(dataTransferItemList) {
+        const fileEntries = [];
+        const queue = [];
+        for (let i = 0; i < dataTransferItemList.length; i++) {
+            queue.push(dataTransferItemList[i].webkitGetAsEntry());
+        }
+        while (queue.length > 0) {
+            const entry = queue.shift();
+            if (entry.isFile) {
+                const file = await filePromise(entry);
+                file.fullPath = entry.fullPath.substring(1);
+                fileEntries.push(file);
+            } else if (entry.isDirectory) {
+                const reader = entry.createReader();
+                queue.push(...await readAllDirectoryEntries(reader));
+            }
+        }
+        return fileEntries;
+    }
+
     //
     // Drag/drop handler for files to be uploaded
     //
@@ -1008,16 +1074,18 @@ function UploadController($scope, SharedService) {
                 target.removeClass('dragover');
                 return false;
             })
-            .on('drop', (e) => {
+            .on('drop', async (e) => {
                 DEBUG.log('Dropped files');
                 e.stopPropagation();
                 e.preventDefault();
 
                 target.removeClass('dragover');
 
+                $bl.addClass('fa-spin');
                 const files = SharedService.hasAddedFiles()
                     ? SharedService.getAddedFiles()
-                    : e.originalEvent.dataTransfer.files;
+                    : await getAllFileEntries(e.originalEvent.dataTransfer.items);
+                $bl.removeClass('fa-spin');
 
                 $scope.$apply(() => {
                     $scope.upload.files = [];
@@ -1027,9 +1095,10 @@ function UploadController($scope, SharedService) {
                             DEBUG.log('File:', fileii.name, 'Size:', fileii.size, 'Type:', fileii.type);
                             $scope.upload.files.push({
                                 file: fileii,
-                                name: fileii.name,
+                                name: fileii.fullPath ? fileii.fullPath : fileii.name,
                                 type: fileii.type,
                                 size: bytesToSize(fileii.size),
+                                short: path2short(fileii.fullPath ? fileii.fullPath : fileii.name),
                             });
                         }
                     }
@@ -1217,8 +1286,8 @@ function TrashController($scope, SharedService) {
 
             const td = [
                 $('<td>').append(ii + 1),
-                $('<td>').append(isfolder(obj.Key) ? prefix2folder(obj.Key) : fullpath2filename(obj.Key)),
-                $('<td>').append(isfolder(obj.Key) ? prefix2parentfolder(obj.Key) : fullpath2pathname(obj.Key)),
+                $('<td>').append(path2short(isfolder(obj.Key) ? prefix2folder(obj.Key) : fullpath2filename(obj.Key))),
+                $('<td>').append(path2short(isfolder(obj.Key) ? prefix2parentfolder(obj.Key) : fullpath2pathname(obj.Key))),
                 $('<td>').append(isfolder(obj.Key) ? '' : moment(obj.LastModified).fromNow()),
                 $('<td>').append(obj.LastModified ? moment(obj.LastModified).local().format('YYYY-MM-DD HH:mm:ss') : ''),
                 $('<td>').append(isfolder(obj.Key) ? '' : mapStorage[obj.StorageClass]),
