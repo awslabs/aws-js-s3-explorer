@@ -1014,6 +1014,7 @@ function UploadController($scope, SharedService) {
             });
         } catch (err) {
             DEBUG.log(err);
+            return undefined;
         }
     }
 
@@ -1037,6 +1038,7 @@ function UploadController($scope, SharedService) {
             });
         } catch (err) {
             DEBUG.log(err);
+            return undefined;
         }
     }
 
@@ -1045,7 +1047,8 @@ function UploadController($scope, SharedService) {
         const fileEntries = [];
         const queue = [];
         for (let i = 0; i < dataTransferItemList.length; i++) {
-            queue.push(dataTransferItemList[i].webkitGetAsEntry());
+            const dtItem = dataTransferItemList[i];
+            queue.push(typeof dtItem.webkitGetAsEntry === 'function' ? dtItem.webkitGetAsEntry() : dtItem.getAsEntry());
         }
         while (queue.length > 0) {
             const entry = queue.shift();
@@ -1059,6 +1062,16 @@ function UploadController($scope, SharedService) {
             }
         }
         return fileEntries;
+    }
+
+    // Wrapper to get files safe
+    async function getFilesList(dataTransfer) {
+        if (dataTransfer.items.length > 0) {
+            if (typeof dataTransfer.items[0].webkitGetAsEntry === 'function'
+               || typeof dataTransfer.items[0].getAsEntry === 'function') return getAllFileEntries(dataTransfer.items);
+            DEBUG.log('Can not do folders upload, falling back to files only');
+            return dataTransfer.files;
+        } return [];
     }
 
     //
@@ -1084,7 +1097,7 @@ function UploadController($scope, SharedService) {
                 $bl.addClass('fa-spin');
                 const files = SharedService.hasAddedFiles()
                     ? SharedService.getAddedFiles()
-                    : await getAllFileEntries(e.originalEvent.dataTransfer.items);
+                    : await getFilesList(e.originalEvent.dataTransfer);
                 $bl.removeClass('fa-spin');
 
                 $scope.$apply(() => {
