@@ -221,6 +221,18 @@ permissions and limitations under the License.
         }
     }
 
+    function htmlEscape(str) {
+        return str
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;')
+            .replace(/\//g, '&#x2F;')
+            .replace(/`/g, '&#x60;')
+            .replace(/=/g, '&#x3D;');
+    }
+
     function isthisdocument(bucket, key) {
         return key === "index.html";
     }
@@ -231,18 +243,18 @@ permissions and limitations under the License.
 
     // Convert cars/vw/golf.png to golf.png
     function fullpath2filename(path) {
-        return path.replace(/^.*[\\\/]/, '');
+        return htmlEscape(path.replace(/^.*[\\\/]/, ''));
     }
 
     // Convert cars/vw/golf.png to cars/vw
     function fullpath2pathname(path) {
-        return path.substring(0, path.lastIndexOf('/'));
+        return htmlEscape(path.substring(0, path.lastIndexOf('/')));
     }
 
     // Convert cars/vw/ to vw/
     function prefix2folder(prefix) {
         var parts = prefix.split('/');
-        return parts[parts.length - 2] + '/';
+        return htmlEscape(parts[parts.length - 2] + '/');
     }
 
     // Remove hash from document URL
@@ -523,7 +535,7 @@ permissions and limitations under the License.
                 return fullpath2filename(data);
             } else if (isfolder(data)) {
                 console.log("is folder: " + data);
-                return '<a data-s3="folder" data-prefix="' + data + '" href="' + object2hrefvirt(s3exp_config.Bucket, data) + '">' + prefix2folder(data) + '</a>';
+                return '<a data-s3="folder" data-prefix="' + htmlEscape(data) + '" href="' + object2hrefvirt(s3exp_config.Bucket, data) + '">' + prefix2folder(data) + '</a>';
             } else {
                 console.log("not folder/this document: " + data);
                 return '<a data-s3="object" href="' + object2hrefvirt(s3exp_config.Bucket, data) + '"download="' + fullpath2filename(data) + '">' + fullpath2filename(data) + '</a>';
