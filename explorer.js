@@ -71,51 +71,60 @@ function htmlEscape(str) {
 }
 
 // Convert cars/vw/golf.png to golf.png
-function fullpath2filename(path) {
-    return htmlEscape(path.replace(/^.*[\\/]/, ''));
+function fullpath2filename(path, escape = false) {
+    const rc = path.replace(/^.*[\\/]/, '');
+    return escape ? htmlEscape(rc) : rc;
 }
 
 // Convert cars/vw/golf.png to cars/vw/
-function fullpath2pathname(path) {
+function fullpath2pathname(path, escape = false) {
     const index = path.lastIndexOf('/');
-    return index === -1 ? '/' : htmlEscape(path.substring(0, index + 1));
+    const rc = (index === -1) ? '/' : path.substring(0, index + 1);
+    return escape ? htmlEscape(rc) : rc;
 }
 
 // Convert cars/vw/ to vw/
-function prefix2folder(prefix) {
+function prefix2folder(prefix, escape = false) {
     const parts = prefix.split('/');
-    return htmlEscape(`${parts[parts.length - 2]}/`);
+    const rc = `${parts[parts.length - 2]}/`;
+    return escape ? htmlEscape(rc) : rc;
 }
 
 // Convert cars/vw/sedans/ to cars/vw/
-function prefix2parentfolder(prefix) {
+function prefix2parentfolder(prefix, escape = false) {
     const parts = prefix.split('/');
     parts.splice(parts.length - 2, 1);
-    return htmlEscape(parts.join('/'));
+    const rc = parts.join('/');
+    return escape ? htmlEscape(rc) : rc;
 }
 
 // Convert cars/vw/golf.png to  cars/.../golf.png
 const pathLimit = 80; // Max allowed path length
 const pathHellip = String.fromCharCode(8230); // '&hellip;' char
-function path2short(path) {
-    if (path.length < pathLimit) return path;
+function path2short(path, escape = false) {
+    if (path.length < pathLimit) return escape ? htmlEscape(path) : path;
+
     const soft = `${prefix2parentfolder(fullpath2pathname(path)) + pathHellip}/${fullpath2filename(path)}`;
-    if (soft.length < pathLimit && soft.length > 2) return soft;
+    if (soft.length < pathLimit && soft.length > 2) return escape ? htmlEscape(soft) : soft;
+
     const hard = `${path.substring(0, path.indexOf('/') + 1) + pathHellip}/${fullpath2filename(path)}`;
-    return hard.length < pathLimit ? htmlEscape(hard) : htmlEscape(path.substring(0, pathLimit) + pathHellip);
+    const rc = hard.length < pathLimit ? hard : path.substring(0, pathLimit) + pathHellip;
+    return escape ? htmlEscape(rc) : rc;
 }
 
 // Virtual-hosted-style URL, ex: https://mybucket1.s3.amazonaws.com/index.html
-function object2hrefvirt(bucket, key) {
+function object2hrefvirt(bucket, key, escape = false) {
     const enckey = key.split('/').map(x => encodeURIComponent(x)).join('/');
-    return `${document.location.protocol}//${bucket}.s3.amazonaws.com/${enckey}`;
+    const rc = `${document.location.protocol}//${bucket}.s3.amazonaws.com/${enckey}`;
+    return escape ? htmlEscape(rc) : rc;
 }
 
 // Path-style URLs, ex: https://s3.amazonaws.com/mybucket1/index.html
 // eslint-disable-next-line no-unused-vars
-function object2hrefpath(bucket, key) {
+function object2hrefpath(bucket, key, escape = false) {
     const enckey = key.split('/').map(x => encodeURIComponent(x)).join('/');
-    return `${document.location.protocol}//s3.amazonaws.com/${bucket}/${enckey}`;
+    const rc = `${document.location.protocol}//s3.amazonaws.com/${bucket}/${enckey}`;
+    return escape ? htmlEscape(rc) : rc;
 }
 
 function isfolder(path) {
@@ -300,7 +309,7 @@ function ViewController($scope, SharedService) {
             // in new window/tab
             window.open(target.href, '_blank');
         } else {
-            // Authenticated ser has clicked on an object so create pre-signed
+            // Authenticated user has clicked on an object so create pre-signed
             // URL and download it in new window/tab
             const s3 = new AWS.S3();
             const params = {
@@ -373,30 +382,43 @@ function ViewController($scope, SharedService) {
     });
 
     $scope.renderObject = (data, _type, full) => {
-        // DEBUG.log("renderObject:", JSON.stringify(full));
-        const href = object2hrefvirt($scope.view.settings.bucket, data);
+        // DEBUG.log('renderObject:', JSON.stringify(full));
+        const hrefv = object2hrefvirt($scope.view.settings.bucket, data);
 
-        function render(d, href2, text, download) {
-            const d2 = htmlEscape(d);
+        function buildAnchor(s3key, href, text, download) {
+            const a = $('<a>');
+            a.attr({ 'data-s3key': s3key });
+            a.attr({ href });
             if (download) {
-                return `<a data-s3="object" data-s3key="${d2}" href="${href2}" download="${download}">${text}</a>`;
+                a.attr({ 'data-s3': 'object' });
+                a.attr({ download });
+            } else {
+                a.attr({ 'data-s3': 'folder' });
             }
-            return `<a data-s3="folder" data-s3key="${d2}" href="${href2}">${text}</a>`;
+            a.text(text);
+            return a.prop('outerHTML');
+        }
+
+        function render(d, href, text, download) {
+            if (download) {
+                return buildAnchor(d, href, text, download);
+            }
+
+            return buildAnchor(d, href, text);
         }
 
         if (full.CommonPrefix) {
-            // DEBUG.log("is folder: " + data);
             if ($scope.view.settings.prefix) {
-                return render(data, href, prefix2folder(data));
+                return render(data, hrefv, prefix2folder(data));
             }
 
-            return render(data, href, data);
+            return render(data, hrefv, data);
         }
 
-        return render(data, href, fullpath2filename(data), fullpath2filename(data));
+        return render(data, hrefv, fullpath2filename(data), fullpath2filename(data));
     };
 
-    $scope.renderFolder = (data, _type, full) => (full.CommonPrefix ? '' : fullpath2pathname(data));
+    $scope.renderFolder = (data, _type, full) => (full.CommonPrefix ? '' : fullpath2pathname(data, true));
 
     $scope.progresscb = (objects, folders) => {
         DEBUG.log('ViewController', 'Progress cb objects:', objects);
@@ -1039,6 +1061,7 @@ function UploadController($scope, SharedService) {
         let readEntries = await readEntriesPromise(directoryReader);
         while (readEntries.length > 0) {
             entries.push(...readEntries);
+            // eslint-disable-next-line no-await-in-loop
             readEntries = await readEntriesPromise(directoryReader);
         }
         return entries;
@@ -1067,11 +1090,13 @@ function UploadController($scope, SharedService) {
         while (queue.length > 0) {
             const entry = queue.shift();
             if (entry.isFile) {
+                // eslint-disable-next-line no-await-in-loop
                 const file = await filePromise(entry);
                 file.fullPath = entry.fullPath.substring(1);
                 fileEntries.push(file);
             } else if (entry.isDirectory) {
                 const reader = entry.createReader();
+                // eslint-disable-next-line no-await-in-loop
                 queue.push(...await readAllDirectoryEntries(reader));
             }
         }
@@ -1120,12 +1145,13 @@ function UploadController($scope, SharedService) {
                         const fileii = files[ii];
                         if (fileii.type || fileii.size % 4096 !== 0 || fileii.size > 1048576) {
                             DEBUG.log('File:', fileii.name, 'Size:', fileii.size, 'Type:', fileii.type);
+
                             $scope.upload.files.push({
                                 file: fileii,
-                                name: fileii.fullPath ? fileii.fullPath : fileii.name,
+                                name: fileii.fullPath || fileii.name,
                                 type: fileii.type,
                                 size: bytesToSize(fileii.size),
-                                short: path2short(fileii.fullPath ? fileii.fullPath : fileii.name),
+                                short: path2short(fileii.fullPath || fileii.name),
                             });
                         }
                     }
@@ -1207,7 +1233,7 @@ function ErrorController($scope) {
 function TrashController($scope, SharedService) {
     DEBUG.log('TrashController init');
     window.trashScope = $scope; // for debugging
-    $scope.trash = { title: null, button: null };
+    $scope.trash = { title: null, button: null, objects: [] };
 
     // Cache jquery selectors
     const $btnDelete = $('#trash-btn-delete');
@@ -1305,26 +1331,45 @@ function TrashController($scope, SharedService) {
     $scope.$on('broadcastTrashObjects', (e, args) => {
         DEBUG.log('TrashController', 'broadcast trash objects', args);
 
-        $('#trash-tbody tr').remove();
+        $scope.trash.objects = [];
 
+        // Populate scope trash object array with objects to be deleted
         for (let ii = 0; ii < args.keys.length; ii++) {
             const obj = args.keys[ii];
             DEBUG.log('Object to be deleted:', obj);
 
-            const td = [
-                $('<td>').append(ii + 1),
-                $('<td>').append(path2short(isfolder(obj.Key) ? prefix2folder(obj.Key) : fullpath2filename(obj.Key))),
-                $('<td>').append(path2short(isfolder(obj.Key) ? prefix2parentfolder(obj.Key) : fullpath2pathname(obj.Key))),
-                $('<td>').append(isfolder(obj.Key) ? '' : moment(obj.LastModified).fromNow()),
-                $('<td>').append(obj.LastModified ? moment(obj.LastModified).local().format('YYYY-MM-DD HH:mm:ss') : ''),
-                $('<td>').append(isfolder(obj.Key) ? '' : mapStorage[obj.StorageClass]),
-                $('<td>').append(isfolder(obj.Key) ? '' : bytesToSize(obj.Size)),
-                $('<td>').attr('id', `trash-td-${ii}`).append($('<i>').append('n/a')),
-            ];
+            const object = path2short(isfolder(obj.Key)
+                ? prefix2folder(obj.Key)
+                : fullpath2filename(obj.Key));
 
-            const tr = $('<tr>').attr('id', `trash-tr-${ii}`);
-            td.reduce((trac, item) => trac.append(item), tr);
-            $('#trash-tbody').append(tr);
+            const folder = path2short(isfolder(obj.Key)
+                ? prefix2parentfolder(obj.Key)
+                : fullpath2pathname(obj.Key));
+
+            const lastmodified = isfolder(obj.Key)
+                ? ''
+                : moment(obj.LastModified).fromNow();
+
+            const timestamp = obj.LastModified
+                ? moment(obj.LastModified).local().format('YYYY-MM-DD HH:mm:ss')
+                : '';
+
+            const objectclass = isfolder(obj.Key)
+                ? ''
+                : mapStorage[obj.StorageClass];
+
+            const size = isfolder(obj.Key)
+                ? ''
+                : bytesToSize(obj.Size);
+
+            $scope.trash.objects.push({
+                object,
+                folder,
+                lastmodified,
+                timestamp,
+                objectclass,
+                size,
+            });
         }
 
         // Remove any prior click handler from Delete button

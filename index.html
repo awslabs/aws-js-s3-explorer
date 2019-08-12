@@ -320,7 +320,18 @@ Please see the project <a target="_blank" href="https://github.com/awslabs/aws-j
                                         <th>Result</th>
                                     </tr>
                                 </thead>
-                                <tbody id="trash-tbody"></tbody>
+                                <tbody id="trash-tbody">
+                                    <tr ng-repeat="o in trash.objects" ng-attr-id="trash-tr-{{$index}}">
+                                        <td>{{$index + 1}}</td>
+                                        <td>{{o.object}}</td>
+                                        <td>{{o.folder}}</td>
+                                        <td>{{o.last_modified}}</td>
+                                        <td>{{o.timestamp}}</td>
+                                        <td>{{o.class}}</td>
+                                        <td>{{o.size}}</td>
+                                        <td ng-attr-id="trash-td-{{$index}}"><i>n/a</i></td>
+                                    </tr>
+                                </tbody>
                             </table>
                         </div>
                     </div>
