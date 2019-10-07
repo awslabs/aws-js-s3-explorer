@@ -792,6 +792,7 @@ function AddFolderController($scope, SharedService) {
         DEBUG.log('AddFolderController', 'broadcast change settings bucket:', args.settings.bucket);
         $scope.add_folder.settings = args.settings;
         $scope.add_folder.bucket = args.settings.bucket;
+        $scope.add_folder.view_prefix = args.settings.prefix || '/';
         DEBUG.log('AddFolderController add_folder bcs', $scope.add_folder);
     });
 
