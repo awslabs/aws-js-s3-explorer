@@ -1089,15 +1089,17 @@ function UploadController($scope, SharedService) {
         }
         while (queue.length > 0) {
             const entry = queue.shift();
-            if (entry.isFile) {
-                // eslint-disable-next-line no-await-in-loop
-                const file = await filePromise(entry);
-                file.fullPath = entry.fullPath.substring(1);
-                fileEntries.push(file);
-            } else if (entry.isDirectory) {
-                const reader = entry.createReader();
-                // eslint-disable-next-line no-await-in-loop
-                queue.push(...await readAllDirectoryEntries(reader));
+            if (entry) {
+                if (entry.isFile) {
+                    // eslint-disable-next-line no-await-in-loop
+                    const file = await filePromise(entry);
+                    file.fullPath = entry.fullPath.substring(1);
+                    fileEntries.push(file);
+                } else if (entry.isDirectory) {
+                    const reader = entry.createReader();
+                    // eslint-disable-next-line no-await-in-loop
+                    queue.push(...await readAllDirectoryEntries(reader));
+                }
             }
         }
         return fileEntries;
@@ -1138,6 +1140,11 @@ function UploadController($scope, SharedService) {
                     ? SharedService.getAddedFiles()
                     : await getFilesList(e.originalEvent.dataTransfer);
                 $bl.removeClass('fa-spin');
+
+                if (!files.length) {
+                    DEBUG.log('Nothing to upload');
+                    return false;
+                }
 
                 $scope.$apply(() => {
                     $scope.upload.files = [];
@@ -1189,6 +1196,8 @@ function UploadController($scope, SharedService) {
 
                 // Launch the uploader modal
                 $('#UploadModal').modal({ keyboard: true, backdrop: 'static' });
+
+                return false;
             });
     };
 
