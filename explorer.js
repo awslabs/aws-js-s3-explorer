@@ -985,6 +985,7 @@ function UploadController($scope, SharedService) {
     //
     $scope.uploadFiles = (Bucket, prefix) => {
         $scope.$apply(() => {
+            $scope.upload.uploads = [];
             $scope.upload.uploading = true;
         });
 
