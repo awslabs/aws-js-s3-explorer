@@ -967,18 +967,25 @@ function UploadController($scope, SharedService) {
     DEBUG.log('UploadController init');
     window.uploadScope = $scope; // for debugging
     $scope.upload = {
-        button: null, title: null, files: [],
+        button: null, title: null, files: [], uploads: [],
     };
 
     // Cache jquery selectors
     const $btnUpload = $('#upload-btn-upload');
     const $btnCancel = $('#upload-btn-cancel');
 
+    // Add new click handler for Cancel button
+    $btnCancel.click((e2) => {
+        e2.preventDefault();
+        $scope.upload.uploads.forEach(upl => upl.abort());
+    });
+
     //
     // Upload a list of local files to the provided bucket and prefix
     //
     $scope.uploadFiles = (Bucket, prefix) => {
         $scope.$apply(() => {
+            $scope.upload.uploads = [];
             $scope.upload.uploading = true;
         });
 
@@ -1013,6 +1020,11 @@ function UploadController($scope, SharedService) {
                     // and we do not treat this as completely unexpected
                     if (err.code === 'AccessDenied') {
                         $(`#upload-td-${ii}`).html('<span class="uploaderror">Access Denied</span>');
+                    } else if (err.code === 'RequestAbortedError') {
+                        DEBUG.log(err.message);
+                        $btnUpload.hide();
+                        $btnCancel.text('Close');
+                        SharedService.viewRefresh();
                     } else {
                         DEBUG.log(JSON.stringify(err));
                         $(`#upload-td-${ii}`).html(`<span class="uploaderror">Failed:&nbsp${err.code}</span>`);
@@ -1037,9 +1049,11 @@ function UploadController($scope, SharedService) {
                 }
             };
 
-            s3.upload(params)
-                .on('httpUploadProgress', funcprogress)
-                .send(funcsend);
+            const upl = s3.upload(params);
+            $scope.$apply(() => {
+                $scope.upload.uploads.push(upl);
+            });
+            upl.on('httpUploadProgress', funcprogress).send(funcsend);
         });
     };
 
