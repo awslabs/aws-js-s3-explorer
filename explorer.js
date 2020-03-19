@@ -27,6 +27,7 @@ const s3ExplorerColumns = {
 const $tb = $('#s3objects-table');
 const $bc = $('#breadcrumb');
 const $bl = $('#bucket-loader');
+const $dl = $('#bucket-download');
 
 // Map S3 storage types to text
 const mapStorage = {
@@ -291,6 +292,29 @@ function ViewController($scope, SharedService) {
         bucket: null, prefix: null, settings: null, objectCount: 0, keys_selected: [],
     };
     $scope.stop = false;
+
+    $dl.on('click', async (e) => {
+        $scope.view.keys_selected.forEach(checkedItem => {
+            if (checkedItem.Key.endsWith("/")) {
+                DEBUG.log("Error: Folder Selected For Download");
+            } else {
+                const s3 = new AWS.S3();
+                const params = {
+                    Bucket: $scope.view.settings.bucket, Key: checkedItem.Key, Expires: 15
+                };
+
+                s3.getSignedUrl('getObject', params, (err, url) => {
+                    if (err) {
+                        DEBUG.log('err:', err);
+                        SharedService.showError(params, err);
+                    } else {
+                        DEBUG.log('url:', url);
+                        window.open(url, "_blank");
+                        }
+                    });
+            }
+        });
+    })
 
     // Delegated event handler for S3 object/folder clicks. This is delegated
     // because the object/folder rows are added dynamically and we do not want

@@ -19,7 +19,7 @@ permissions and limitations under the License.
 <html lang="en" ng-app="aws-js-s3-explorer">
 
 <head>
-    <title>Amazon S3 Explorer (v2 alpha)</title>
+    <title>Amazon S3 Explorer</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="shortcut icon" href="https://aws.amazon.com/favicon.ico">
@@ -465,7 +465,7 @@ Please see the project <a target="_blank" href="https://github.com/awslabs/aws-j
                         <div class="btn-group pull-left">
                             <!-- Utility name -->
                             <div class="title pull-left">
-                                Amazon S3 Explorer (v2 alpha)&nbsp;
+                                Amazon S3 Explorer&nbsp;
                             </div>
                             <!-- Bucket breadcrumbs -->
                             <div class="pull-right" ng-hide="!view.settings">
@@ -482,7 +482,7 @@ Please see the project <a target="_blank" href="https://github.com/awslabs/aws-j
                             <div>
                                 <!-- Info/Refresh/Settings buttons -->
                                 <div class="btn-group">
-                                    <span id="bucket-plus" style="cursor: pointer;" class="btn fa fa-folder-plus fa-2x" ng-hide="!view.settings" title="New folder" data-target="#AddFolderModal" data-toggle="modal"></span>
+                                    <span id="bucket-download" style="cursor: pointer;" class="btn fa fa-cloud-download-alt fa-2x"></span>
                                     <span id="bucket-upload" style="cursor: pointer;" class="btn fa fa-cloud-upload-alt fa-2x" ng-hide="!view.settings" ng-click="upload()" title="Upload files"></span>
                                     <span id="bucket-trash" style="cursor: pointer;" class="btn fa fa-trash-alt fa-2x" title="Delete {{view.keys_selected.length}} selected object(s)" ng-hide="!view.settings || !view.keys_selected.length" ng-disabled="!view.keys_selected.length" ng-click="trash()"></span>
                                     <span id="bucket-info" style="cursor: pointer;" class="btn fa fa-info-circle fa-2x" title="Info" data-target="#InfoModal" data-toggle="modal"></span>
