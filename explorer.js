@@ -293,27 +293,53 @@ function ViewController($scope, SharedService) {
     };
     $scope.stop = false;
 
-    $dl.on('click', async (e) => {
-        $scope.view.keys_selected.forEach(checkedItem => {
-            if (checkedItem.Key.endsWith("/")) {
-                DEBUG.log("Error: Folder Selected For Download");
-            } else {
-                const s3 = new AWS.S3();
-                const params = {
-                    Bucket: $scope.view.settings.bucket, Key: checkedItem.Key, Expires: 15
-                };
+    $dl.on('click', async () => {
+        const selectedFiles = $scope.view.keys_selected.filter(item => !item.Key.endsWith("/") || DEBUG.log("Folders cannot be downloaded"));
+        if (!selectedFiles.length) return;
 
+        const signedUrls = await Promise.all(selectedFiles.map(async (checkedItem) => {
+            const s3 = new AWS.S3();
+            const params = {
+                Bucket: $scope.view.settings.bucket, Key: checkedItem.Key, Expires: 15
+            };
+            return new Promise((resolve, reject) => {
                 s3.getSignedUrl('getObject', params, (err, url) => {
                     if (err) {
                         DEBUG.log('err:', err);
                         SharedService.showError(params, err);
+                        reject(err)
                     } else {
-                        DEBUG.log('url:', url);
-                        window.open(url, "_blank");
-                        }
+                        const filename = checkedItem.Key.split("/")[checkedItem.Key.split("/").length - 1];
+                        resolve({ url, filename });
+                    }
+                });
+
+            })
+        })).catch(err => DEBUG.log(err));
+
+        if (signedUrls.length == 1) {
+            // direct download if one file selected
+            const { url, filename } = signedUrls[0];
+            fetch(url)
+                .then(resp => resp.blob())
+                .then(blob => saveAs(blob, filename));
+        } else if (signedUrls.length) {
+            // otherwise download all files at once as ZIP file
+            const zip = new JSZip();
+            await Promise.all(signedUrls.map(fileToGet => {
+                const { url, filename } = fileToGet;
+                return fetch(url)
+                    .then(resp => resp.blob())
+                    .then(async (blob) => {
+                        var buffer = await blob.arrayBuffer();
+                        zip.file(filename, buffer, { binary:true });
                     });
-            }
-        });
+            }));
+            zip.generateAsync({type: "blob"}).then(zippedFiles => {
+                var today = new Date().toLocaleDateString().replace(/\//ig, "-");
+                saveAs(zippedFiles, `${signedUrls.length} files ${today}.zip`);
+            });
+        }
     })
 
     // Delegated event handler for S3 object/folder clicks. This is delegated
@@ -346,7 +372,10 @@ function ViewController($scope, SharedService) {
                     SharedService.showError(params, err);
                 } else {
                     DEBUG.log('url:', url);
-                    window.open(url, '_blank');
+                    var filename = params.Key.split("/")[params.Key.split("/").length - 1];
+                    fetch(url)
+                        .then(resp => resp.blob())
+                        .then(blob => saveAs(blob, filename));
                 }
             });
         }
