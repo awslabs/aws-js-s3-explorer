@@ -947,7 +947,7 @@ function SettingsController($scope, SharedService) {
     // Initialized for an unauthenticated user exploring the current bucket
     // TODO: calculate current bucket and initialize below
     $scope.settings = {
-        auth: 'auth', region: '', bucket: '', entered_bucket: 'idr-dass-desy-testing-iam-policies', selected_bucket: '', view: 'folder', delimiter: '/', prefix: '',
+        auth: 'temp', region: '', bucket: '', entered_bucket: 'idr-dass-desy-testing-iam-policies', selected_bucket: '', view: 'folder', delimiter: '/', prefix: '',
     };
     $scope.settings.mfa = { use: 'no', code: '' };
     $scope.settings.cred = { accessKeyId: '', secretAccessKey: '', sessionToken: '' };
