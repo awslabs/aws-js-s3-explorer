@@ -145,7 +145,7 @@ In order for S3 Explorer hosted in BUCKET1 to explore the contents of BUCKET2, B
 
 CORS defines a way for client web applications that are loaded in one domain to interact with resources in a different domain.
 
-Note that CORS configuerations do not, in and of themselves, authorize the user to perform any actions on the bucket. They simply enable the browser's security model to allow a request to S3. Actual permissions for the user must be configured either via bucket permissions (for public access), or IAM permissions (for private access).
+Note that CORS configurations do not, in and of themselves, authorize the user to perform any actions on the bucket. They simply enable the browser's security model to allow a request to S3. Actual permissions for the user must be configured either via bucket permissions (for public access), or IAM permissions (for private access).
 
 #### CORS for Read-Only S3 Bucket
 
