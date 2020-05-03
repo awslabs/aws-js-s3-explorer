@@ -19,7 +19,7 @@ permissions and limitations under the License.
 <html lang="en" ng-app="aws-js-s3-explorer">
 
 <head>
-    <title>Amazon S3 Explorer</title>
+    <title>Amazon S3 Explorer (v2 alpha)</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="shortcut icon" href="https://aws.amazon.com/favicon.ico">
@@ -88,12 +88,12 @@ permissions and limitations under the License.
                                         <div class="input-group bottom-marg-10">
                                             <span class="input-group-addon">Authentication</span>
                                             <select name="county" class="form-control" ng-model="settings.auth" required>
-                                                <!-- <option value="anon">Public Bucket (no authentication needed)</option> -->
-                                                <!-- <option value="auth">Private Bucket (I have AWS credentials)</option> -->
+                                                <option value="anon">Public Bucket (no authentication needed)</option>
+                                                <option value="auth">Private Bucket (I have AWS credentials)</option>
                                                 <option value="temp">Private Bucket (I have temporary AWS credentials)</option>
                                             </select>
                                         </div>
-                                        <!-- <p ng-hide="settings.auth=='anon'"><b>Credentials</b>: this web page uses the <a href="http://aws.amazon.com/sdk-for-browser/" target="_blank">AWS SDK for JavaScript in the Browser</a>. Your AWS credentials are kept in memory and used by the SDK for authentication. Your secret access key is used to sign API requests but it is <b>not</b> sent to the S3 service.</p> -->
+                                        <p ng-hide="settings.auth=='anon'"><b>Credentials</b>: this web page uses the <a href="http://aws.amazon.com/sdk-for-browser/" target="_blank">AWS SDK for JavaScript in the Browser</a>. Your AWS credentials are kept in memory and used by the SDK for authentication. Your secret access key is used to sign API requests but it is <b>not</b> sent to the S3 service.</p>
                                         <div class="input-group bottom-marg-10" ng-hide="settings.auth=='anon'">
                                             <span class="input-group-addon">Access Key ID</span>
                                             <input name="accesskey" type="text" ng-model="settings.cred.accessKeyId" class="form-control" ng-disabled="settings.auth=='anon'" placeholder="access key id" required/>
@@ -465,7 +465,7 @@ Please see the project <a target="_blank" href="https://github.com/awslabs/aws-j
                         <div class="btn-group pull-left">
                             <!-- Utility name -->
                             <div class="title pull-left">
-                                Amazon S3 Explorer&nbsp;
+                                Amazon S3 Explorer (v2 alpha)&nbsp;
                             </div>
                             <!-- Bucket breadcrumbs -->
                             <div class="pull-right" ng-hide="!view.settings">
@@ -482,8 +482,9 @@ Please see the project <a target="_blank" href="https://github.com/awslabs/aws-j
                             <div>
                                 <!-- Info/Refresh/Settings buttons -->
                                 <div class="btn-group">
-                                    <span id="bucket-download" style="cursor: pointer;" class="btn fa fa-cloud-download-alt fa-2x" title="Download" ng-hide="!view.settings"></span>
+                                    <span id="bucket-plus" style="cursor: pointer;" class="btn fa fa-folder-plus fa-2x" ng-hide="!view.settings" title="New folder" data-target="#AddFolderModal" data-toggle="modal"></span>
                                     <span id="bucket-upload" style="cursor: pointer;" class="btn fa fa-cloud-upload-alt fa-2x" ng-hide="!view.settings" ng-click="upload()" title="Upload files"></span>
+                                    <span id="bucket-download" style="cursor: pointer;" class="btn fa fa-cloud-download-alt fa-2x" title="Download" ng-hide="!view.settings || !view.keys_selected.length" ng-disabled="!view.keys_selected.length"></span>
                                     <span id="bucket-trash" style="cursor: pointer;" class="btn fa fa-trash-alt fa-2x" title="Delete {{view.keys_selected.length}} selected object(s)" ng-hide="!view.settings || !view.keys_selected.length" ng-disabled="!view.keys_selected.length" ng-click="trash()"></span>
                                     <span id="bucket-info" style="cursor: pointer;" class="btn fa fa-info-circle fa-2x" title="Info" data-target="#InfoModal" data-toggle="modal"></span>
                                     <span id="bucket-loader" style="cursor: pointer;" class="btn fa fa-sync fa-2x" ng-hide="!view.settings" ng-click="refresh()" title="Refresh"></span>
