@@ -977,7 +977,17 @@ function UploadController($scope, SharedService) {
     // Add new click handler for Cancel button
     $btnCancel.click((e2) => {
         e2.preventDefault();
-        $scope.upload.uploads.forEach(upl => upl.abort());
+
+        // If uploads still in progress then cancel them all
+        if ($scope.upload.uploads && $scope.upload.uploads.length > 0) {
+            console.log(`Cancel ${$scope.upload.uploads.length} uploads`);
+            $scope.upload.uploads.forEach(upl => upl.abort());
+            $scope.upload.uploads = [];
+            $scope.upload.uploading = true;
+        } else {
+            console.log('Close upload modal');
+            $('#UploadModal').modal('hide');
+        }
     });
 
     //
@@ -1004,6 +1014,11 @@ function UploadController($scope, SharedService) {
                 Body: file.file, Bucket, Key: (prefix || '') + (file.file.fullPath ? file.file.fullPath : file.file.name), ContentType: file.file.type,
             };
 
+            const upl = s3.upload(params);
+            $scope.$apply(() => {
+                $scope.upload.uploads.push(upl);
+            });
+
             const funcprogress = (evt) => {
                 DEBUG.log('Part:', evt.part, evt.loaded, evt.total);
                 const pc = evt.total ? ((evt.loaded * 100.0) / evt.total) : 0;
@@ -1014,6 +1029,13 @@ function UploadController($scope, SharedService) {
                 col.css('width', pcts).text(pcts);
             };
 
+            const funccancelled = (_file) => {
+                const col = $(`#upload-td-progress-${ii}`);
+                col.attr('data-percent', 100);
+                col.css('width', '100%').text('Cancelled');
+                col.addClass('progress-bar-danger');
+            };
+
             const funcsend = (err, data) => {
                 if (err) {
                     // AccessDenied is a normal consequence of lack of permission
@@ -1021,10 +1043,10 @@ function UploadController($scope, SharedService) {
                     if (err.code === 'AccessDenied') {
                         $(`#upload-td-${ii}`).html('<span class="uploaderror">Access Denied</span>');
                     } else if (err.code === 'RequestAbortedError') {
-                        DEBUG.log(err.message);
+                        DEBUG.log('Abort upload:', file);
+                        funccancelled(file);
                         $btnUpload.hide();
                         $btnCancel.text('Close');
-                        SharedService.viewRefresh();
                     } else {
                         DEBUG.log(JSON.stringify(err));
                         $(`#upload-td-${ii}`).html(`<span class="uploaderror">Failed:&nbsp${err.code}</span>`);
@@ -1038,21 +1060,20 @@ function UploadController($scope, SharedService) {
 
                     $scope.$apply(() => {
                         $scope.upload.button = `Upload (${count})`;
+                        $scope.upload.uploads = $scope.upload.uploads.filter(f => f !== upl);
                     });
 
                     // If all files uploaded then refresh underlying folder view
                     if (count === 0) {
                         $btnUpload.hide();
                         $btnCancel.text('Close');
+                        $scope.upload.uploading = true;
                         SharedService.viewRefresh();
                     }
                 }
             };
 
-            const upl = s3.upload(params);
-            $scope.$apply(() => {
-                $scope.upload.uploads.push(upl);
-            });
+            // Kick off the upload and report progress
             upl.on('httpUploadProgress', funcprogress).send(funcsend);
         });
     };
@@ -1060,7 +1081,7 @@ function UploadController($scope, SharedService) {
     // Wrap readEntries in a promise to make working with readEntries easier
     async function readEntriesPromise(directoryReader) {
         try {
-            return await new Promise((resolve, reject) => {
+            return new Promise((resolve, reject) => {
                 directoryReader.readEntries(resolve, reject);
             });
         } catch (err) {
@@ -1085,7 +1106,7 @@ function UploadController($scope, SharedService) {
     // Retrieve File object from FileEntry
     async function filePromise(fileEntry) {
         try {
-            return await new Promise((resolve, reject) => {
+            return new Promise((resolve, reject) => {
                 fileEntry.file(resolve, reject);
             });
         } catch (err) {
@@ -1120,14 +1141,19 @@ function UploadController($scope, SharedService) {
         return fileEntries;
     }
 
-    // Wrapper to get files safe
+    // Wrapper to get files safely
     async function getFilesList(dataTransfer) {
         if (dataTransfer.items.length > 0) {
-            if (typeof dataTransfer.items[0].webkitGetAsEntry === 'function'
-               || typeof dataTransfer.items[0].getAsEntry === 'function') return getAllFileEntries(dataTransfer.items);
-            DEBUG.log('Can not do folders upload, falling back to files only');
+            if (typeof dataTransfer.items[0].webkitGetAsEntry === 'function' ||
+                typeof dataTransfer.items[0].getAsEntry === 'function') {
+                return getAllFileEntries(dataTransfer.items);
+            }
+
+            DEBUG.log('Cannot do folders upload, falling back to files only');
             return dataTransfer.files;
-        } return [];
+        }
+
+        return [];
     }
 
     //
@@ -1165,6 +1191,8 @@ function UploadController($scope, SharedService) {
                     $scope.upload.files = [];
                     for (let ii = 0; ii < files.length; ii++) {
                         const fileii = files[ii];
+
+                        // See https://github.com/awslabs/aws-js-s3-explorer/issues/71
                         if (fileii.type || fileii.size % 4096 !== 0 || fileii.size > 1048576) {
                             DEBUG.log('File:', fileii.name, 'Size:', fileii.size, 'Type:', fileii.type);
 
