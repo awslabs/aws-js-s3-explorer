@@ -983,7 +983,6 @@ function UploadController($scope, SharedService) {
             console.log(`Cancel ${$scope.upload.uploads.length} uploads`);
             $scope.upload.uploads.forEach(upl => upl.abort());
             $scope.upload.uploads = [];
-            $scope.upload.uploading = true;
         } else {
             console.log('Close upload modal');
             $('#UploadModal').modal('hide');
@@ -996,7 +995,6 @@ function UploadController($scope, SharedService) {
     $scope.uploadFiles = (Bucket, prefix) => {
         $scope.$apply(() => {
             $scope.upload.uploads = [];
-            $scope.upload.uploading = true;
         });
 
         DEBUG.log('Dropped files:', $scope.upload.files);
@@ -1020,7 +1018,7 @@ function UploadController($scope, SharedService) {
             });
 
             const funcprogress = (evt) => {
-                DEBUG.log('Part:', evt.part, evt.loaded, evt.total);
+                DEBUG.log('File:', file, 'Part:', evt.part, evt.loaded, 'of', evt.total);
                 const pc = evt.total ? ((evt.loaded * 100.0) / evt.total) : 0;
                 const pct = Math.round(pc);
                 const pcts = `${pct}%`;
@@ -1037,6 +1035,10 @@ function UploadController($scope, SharedService) {
             };
 
             const funcsend = (err, data) => {
+                let count = $btnUpload.attr('data-filecount');
+                DEBUG.log('Upload count was', count, 'now', count - 1);
+                $btnUpload.attr('data-filecount', --count);
+
                 if (err) {
                     // AccessDenied is a normal consequence of lack of permission
                     // and we do not treat this as completely unexpected
@@ -1054,22 +1056,19 @@ function UploadController($scope, SharedService) {
                     }
                 } else {
                     DEBUG.log('Uploaded', file.file.name, 'to', data.Location);
-                    let count = $btnUpload.attr('data-filecount');
-                    $btnUpload.attr('data-filecount', --count);
                     $(`#upload-td-progress-${ii}`).addClass('progress-bar-success');
 
                     $scope.$apply(() => {
                         $scope.upload.button = `Upload (${count})`;
                         $scope.upload.uploads = $scope.upload.uploads.filter(f => f !== upl);
                     });
+                }
 
-                    // If all files uploaded then refresh underlying folder view
-                    if (count === 0) {
-                        $btnUpload.hide();
-                        $btnCancel.text('Close');
-                        $scope.upload.uploading = true;
-                        SharedService.viewRefresh();
-                    }
+                // If all files complete then update buttons and refresh view
+                if (count === 0) {
+                    $btnUpload.hide();
+                    $btnCancel.text('Close');
+                    SharedService.viewRefresh();
                 }
             };
 
@@ -1228,7 +1227,6 @@ function UploadController($scope, SharedService) {
                 $scope.$apply(() => {
                     $scope.upload.title = `${bucket}/${prefix || ''}`;
                     $scope.upload.button = `Upload (${files.length})`;
-                    $scope.upload.uploading = false;
                 });
 
                 // Reset files selector
@@ -1359,6 +1357,7 @@ function TrashController($scope, SharedService) {
 
                     if (!recursion) {
                         $(`#trash-td-${ii}`).html('<span class="trashdeleted">Deleted</span>');
+                        DEBUG.log('Delete count was', count, 'now', count - 1);
                         $btnDelete.attr('data-filecount', --count);
                     }
 
