@@ -995,6 +995,7 @@ function UploadController($scope, SharedService) {
     $scope.uploadFiles = (Bucket, prefix) => {
         $scope.$apply(() => {
             $scope.upload.uploads = [];
+            $scope.upload.uploading = true;
         });
 
         DEBUG.log('Dropped files:', $scope.upload.files);
@@ -1227,6 +1228,7 @@ function UploadController($scope, SharedService) {
                 $scope.$apply(() => {
                     $scope.upload.title = `${bucket}/${prefix || ''}`;
                     $scope.upload.button = `Upload (${files.length})`;
+                    $scope.upload.uploading = false;
                 });
 
                 // Reset files selector
