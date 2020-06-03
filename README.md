@@ -2,9 +2,11 @@
 
 Note: if you are looking for the newer, read-write version of this tool that supports non-public S3 buckets then please visit the [S3 Explorer (v2 alpha)](https://github.com/awslabs/aws-js-s3-explorer/tree/v2-alpha) page.
 
-AWS JavaScript S3 Explorer is a JavaScript application that uses AWS's JavaScript SDK and S3 APIs to make the contents of an S3 bucket easy to browse via a web browser. We've created this to enable easier sharing of objects and data via Amazon S3.
+AWS JavaScript S3 Explorer is a JavaScript application that uses AWS's JavaScript SDK and S3 APIs to make the contents of a public S3 bucket easy to browse via a web browser. We've created this to enable easier sharing of public objects and data via Amazon S3.
 
 The index.html file in this bucket contains the entire application. A visitor to the index.html page is prompted to enter the name of an Amazon S3 bucket. Upon adding the bucket name, the contents of the bucket will be rendered on the page.
+
+**Important**: unless you explicitly want everyone on the internet to be able to read your S3 bucket, you should ensure that your S3 bucket is **not** public. If you want to support private S3 buckets then please visit the [S3 Explorer (v2 alpha)](https://github.com/awslabs/aws-js-s3-explorer/tree/v2-alpha) page. You can read more at [Security Best Practices for Amazon S3](https://docs.aws.amazon.com/AmazonS3/latest/dev/security-best-practices.html).
 
 ## Screenshots
 
