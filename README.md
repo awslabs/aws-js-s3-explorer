@@ -6,6 +6,8 @@ AWS JavaScript S3 Explorer (v2 alpha) is a JavaScript application that uses AWS'
 
 The index.html, explorer.js, and explorer.css files in this bucket contain the entire application. A visitor to the index.html page is prompted to enter the name of an Amazon S3 bucket and optionally supply AWS credentials. Upon supplying the required information, the contents of the bucket will be rendered on the page.
 
+**Important**: unless you explicitly want everyone on the internet to be able to read your S3 bucket, you should ensure that your S3 bucket is **not** public. You can read more at [Security Best Practices for Amazon S3](https://docs.aws.amazon.com/AmazonS3/latest/dev/security-best-practices.html).
+
 ## Screenshots
 
 Default starting view for public S3 bucket:
