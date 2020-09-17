@@ -19,10 +19,10 @@ permissions and limitations under the License.
 <html lang="en">
 
 <head>
-    <title>AWS S3 Explorer</title>
+    <title>Gene Ontology Archive of Releases</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="shortcut icon" href="https://aws.amazon.com/favicon.ico">
+    <link rel="shortcut icon" href="http://www.geneontology.org/favicon.ico">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css" integrity="sha384-PmY9l28YgO4JwMKbTvgaS7XNZJ30MK9FAZjjzXtlqyZCqBY6X6bXIkM++IkyinN+" crossorigin="anonymous">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap-theme.min.css" integrity="sha384-jzngWsPS6op3fgRCDTESqrEJwRKck+CILhJVO5VvaAZCq8JYf8HsR/HPpBOOPZfR" crossorigin="anonymous">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.12.0/css/all.css">
@@ -34,7 +34,6 @@ permissions and limitations under the License.
 
         #page-wrapper {
             width: 100%;
-            padding: 5px 15px;
         }
 
         #tb-s3objects {
@@ -64,6 +63,15 @@ permissions and limitations under the License.
         #navbuttons .btn {
             padding: 3px 6px;
         }
+
+        blockquote { font-size: 14px; font-style: italic }
+        .logo img { width: 200px; margin-top: 20px; margin-right: 30px }
+        .panel-heading { box-shadow: 0 1px 4px 0 rgba(0,0,0,0.30); }
+        .panel-body {
+            max-width: 1000px;
+            margin: 0 auto;        
+        }
+               
     </style>
 </head>
 
@@ -74,53 +82,31 @@ permissions and limitations under the License.
     <div id="page-wrapper">
         <div class="row">
             <div class="col-lg-12">
-                <div class="panel panel-primary">
+                <div class="panel">
 
                     <!-- Panel including title, breadcrumbs, and controls -->
                     <div class="panel-heading clearfix">
                         <!-- Title and breadcrumbs -->
                         <div class="btn-group pull-left">
                             <!-- App title -->
-                            <div class="title pull-left">
-                                AWS S3 Explorer&nbsp;
+                            <div class="pull-left logo">
+                                <a href="http://www.geneontology.org">
+                                    <img src="http://geneontology.org/assets/go-logo.large.png">
+                                </a>
                             </div>
-                            <!-- Bucket breadcrumbs -->
-                            <div class="pull-right">
-                                <ul id="breadcrumb" class="breadcrumb pull-right">
-                                    <li class="active">
-                                        <a href="#">&lt;bucket&gt;</a>
-                                    </li>
-                                </ul>
-                            </div>
+
                         </div>
+
+                        <h1>
+                            The Gene Ontology Archive
+                        </h1>
+
                         <!-- Controls -->
                         <div id="navbuttons" class="pull-right">
-                            <div>
-                                <!-- Hide folders checkbox -->
-                                <div class="btn-group">
-                                    <label class="btn">
-                                        <input type="checkbox" id="hidefolders">&nbsp;Hide folders?
-                                    </label>
-                                </div>
-                                <!-- Folder/Bucket radio group -->
-                                <div class="btn-group" data-toggle="buttons">
-                                    <label class="btn btn-primary active" title="View all objects in folder">
-                                        <i class="fa fa-angle-double-up"></i>
-                                        <input type="radio" name="optionsdepth" value="folder" id="optionfolder" checked>&nbsp;Folder
-                                    </label>
-                                    <label class="btn btn-primary" title="View all objects in bucket">
-                                        <i class="fa fa-angle-double-down"></i>
-                                        <input type="radio" name="optionsdepth" value="bucket" id="optionbucket">&nbsp;Bucket
-                                    </label>
-                                </div>
-                                <!-- Bucket selection -->
-                                <div class="btn-group" id="bucket">
-                                    <i id="bucket-chooser" style="cursor: pointer;" class="btn fa fa-cog fa-2x" title="Switch to a different S3 Bucket"></i>
-                                </div>
                                 <!-- Dual purpose: progress spinner and refresh button, plus object count -->
                                 <div class="btn-group" id="refresh">
                                     <span id="bucket-loader" style="cursor: pointer;" class="btn fa fa-refresh fa-2x pull-left" title="Refresh"></span>
-                                    <span id="badgecount" class="badge pull-right" title="Object count">42</span>
+                                    <!-- <span id="badgecount" class="badge pull-right" title="Object count">42</span> -->
                                 </div>
                             </div>
                         </div>
@@ -128,6 +114,32 @@ permissions and limitations under the License.
 
                     <!-- Panel including S3 object table -->
                     <div class="panel-body">
+
+                        <p>
+                            This data is provided by <a href="http://www.geneontology.org">The Gene Ontology Resource</a>.
+                            It contains the monthly releases of GO since August 2018 as well as the GO archive reconstructed from 2005.
+                        </p>
+                        <p>
+                            Any work using the Gene Ontology Resource should cite the following:
+                            <blockquote>
+                                    The Gene Ontology Consortium. The Gene Ontology Resource: 20 years and still GOing strong. Nucleic Acids Res.<br>Jan 2019;47(D1):D330-D338.
+                            </blockquote>
+
+                            In addition, we encourage users to cite the release date of GO (e.g. 2020-06-02) used in your analysis to enable the reproducibility of experiments.
+                        </p>
+
+
+                        <!-- Bucket breadcrumbs -->
+                        Current folder: 
+                        <div class="btn" style="margin-top: 15px; margin-left: 10px;">
+                            <ul id="breadcrumb" class="btn breadcrumb pull-right">
+                                <li class="active dropdown">
+                                    <span href="#">&lt;bucket&gt;</span>
+                                </li>
+                            </ul>
+                        </div> 
+                        
+                        <br><br>
                         <table class="table table-bordered table-hover table-striped" id="tb-s3objects">
                             <thead>
                                 <tr>
@@ -393,8 +405,6 @@ permissions and limitations under the License.
                     $('#bucket-loader').removeClass('fa-spin');
                     bootbox.alert("Error accessing S3 bucket " + scope.params.Bucket + ". Error: " + err);
                 } else {
-                    // console.log('Data: ' + JSON.stringify(data));
-                    console.log("Options: " + $("input[name='optionsdepth']:checked").val());
 
                     // Store marker before filtering data
                     if (data.IsTruncated) {
@@ -460,24 +470,21 @@ permissions and limitations under the License.
         };
     }
 
-    function promptForBucketInput() {
-        bootbox.prompt("Please enter the S3 bucket name", function(result) {
-            if (result !== null) {
-                resetDepth();
-                s3exp_config = {
-                    Bucket: result,
-                    Delimiter: '/'
-                };
-                (s3exp_lister = s3list(s3exp_config, s3draw)).go();
-            }
-        });
-    }
+    // function promptForBucketInput() {
+    //     bootbox.prompt("Please enter the S3 bucket name", function(result) {
+    //         if (result !== null) {
+    //             resetDepth();
+    //             s3exp_config = {
+    //                 Bucket: result,
+    //                 Delimiter: '/'
+    //             };
+    //             (s3exp_lister = s3list(s3exp_config, s3draw)).go();
+    //         }
+    //     });
+    // }
 
     function resetDepth() {
         $('#tb-s3objects').DataTable().column(1).visible(false);
-        $('input[name="optionsdepth"]').val(['folder']);
-        $('input[name="optionsdepth"][value="bucket"]').parent().removeClass('active');
-        $('input[name="optionsdepth"][value="folder"]').parent().addClass('active');
     }
 
     $(document).ready(function() {
@@ -495,39 +502,39 @@ permissions and limitations under the License.
             }
         });
 
-        // Click handler for bucket button (to allow user to change bucket)
-        $('#bucket-chooser').click(function(e) {
-            promptForBucketInput();
-        });
+        // // Click handler for bucket button (to allow user to change bucket)
+        // $('#bucket-chooser').click(function(e) {
+        //     promptForBucketInput();
+        // });
 
-        $('#hidefolders').click(function(e) {
-            $('#tb-s3objects').DataTable().draw();
-        });
+        // $('#hidefolders').click(function(e) {
+        //     $('#tb-s3objects').DataTable().draw();
+        // });
 
-        // Folder/Bucket radio button handler
-        $("input:radio[name='optionsdepth']").change(function() {
-            console.log("Folder/Bucket option change to " + $(this).val());
-            console.log("Change options: " + $("input[name='optionsdepth']:checked").val());
+        // // Folder/Bucket radio button handler
+        // $("input:radio[name='optionsdepth']").change(function() {
+        //     console.log("Folder/Bucket option change to " + $(this).val());
+        //     console.log("Change options: " + $("input[name='optionsdepth']:checked").val());
 
-            // If user selected deep then we do need to do a full list
-            if ($(this).val() == 'bucket') {
-                console.log("Switch to bucket");
-                var choice = $(this).val();
-                $('#tb-s3objects').DataTable().column(1).visible(choice === 'bucket');
-                delete s3exp_config.ContinuationToken;
-                delete s3exp_config.Prefix;
-                s3exp_config.Delimiter = '';
-                (s3exp_lister = s3list(s3exp_config, s3draw)).go();
-                // Else user selected folder then can do a delimiter list
-            } else {
-                console.log("Switch to folder");
-                $('#tb-s3objects').DataTable().column(1).visible(false);
-                delete s3exp_config.ContinuationToken;
-                delete s3exp_config.Prefix;
-                s3exp_config.Delimiter = '/';
-                (s3exp_lister = s3list(s3exp_config, s3draw)).go();
-            }
-        });
+        //     // If user selected deep then we do need to do a full list
+        //     if ($(this).val() == 'bucket') {
+        //         console.log("Switch to bucket");
+        //         var choice = $(this).val();
+        //         $('#tb-s3objects').DataTable().column(1).visible(choice === 'bucket');
+        //         delete s3exp_config.ContinuationToken;
+        //         delete s3exp_config.Prefix;
+        //         s3exp_config.Delimiter = '';
+        //         (s3exp_lister = s3list(s3exp_config, s3draw)).go();
+        //         // Else user selected folder then can do a delimiter list
+        //     } else {
+        //         console.log("Switch to folder");
+        //         $('#tb-s3objects').DataTable().column(1).visible(false);
+        //         delete s3exp_config.ContinuationToken;
+        //         delete s3exp_config.Prefix;
+        //         s3exp_config.Delimiter = '/';
+        //         (s3exp_lister = s3list(s3exp_config, s3draw)).go();
+        //     }
+        // });
 
         function renderObject(data, type, full) {
             if (isthisdocument(s3exp_config.Bucket, data)) {
@@ -602,11 +609,11 @@ permissions and limitations under the License.
             return ((x < y) ? 1 : ((x > y) ? -1 : 0));
         };
 
-        // Allow user to hide folders
-        $.fn.dataTableExt.afnFiltering.push(function(oSettings, aData, iDataIndex) {
-            console.log("hide folders");
-            return $('#hidefolders').is(':checked') ? !isfolder(aData[0]) : true;
-        });
+        // // Allow user to hide folders
+        // $.fn.dataTableExt.afnFiltering.push(function(oSettings, aData, iDataIndex) {
+        //     console.log("hide folders");
+        //     return $('#hidefolders').is(':checked') ? !isfolder(aData[0]) : true;
+        // });
 
         // Delegated event handler for S3 object/folder clicks. This is delegated
         // because the object/folder rows are added dynamically and we do not want
@@ -622,7 +629,7 @@ permissions and limitations under the License.
                 resetDepth();
                 delete s3exp_config.ContinuationToken;
                 s3exp_config.Prefix = target.dataset.prefix;
-                s3exp_config.Delimiter = $("input[name='optionsdepth']:checked").val() == "folder" ? "/" : "";
+                s3exp_config.Delimiter = $("/");
                 (s3exp_lister = s3list(s3exp_config, s3draw)).go();
                 // Else user has clicked on an object so download it in new window/tab
             } else {
