@@ -19,7 +19,7 @@ permissions and limitations under the License.
 <html lang="en">
 
 <head>
-    <title>Gene Ontology Archive of Releases</title>
+    <title>Gene Ontology Data Archive</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="shortcut icon" href="http://www.geneontology.org/favicon.ico">
@@ -66,12 +66,21 @@ permissions and limitations under the License.
 
         blockquote { font-size: 14px; font-style: italic }
         p { margin: 10 0 10px; }
-        h1 { font-size: 34px; color: darkslateblue; }
+        h1 { font-size: 34px; color: #4965c2; }
         .logo img { width: 200px; margin-top: 20px; margin-right: 30px }
         .panel-heading { box-shadow: 0 1px 4px 0 rgba(0,0,0,0.30); }
         .panel-body {
             max-width: 1000px;
             margin: 0 auto;        
+        }
+        .small-margin {
+            margin: 2px 2px;
+        }
+
+        .disclaimer {
+            box-shadow: 0 1px 4px 0 rgba(0,0,0,0.30);
+            padding: 2rem;
+            margin: 3rem 0rem 6rem 0rem;      
         }
                
     </style>
@@ -100,7 +109,7 @@ permissions and limitations under the License.
                         </div>
 
                         <h1>
-                            The Gene Ontology Archive
+                            Gene Ontology Data Archive
                         </h1>
 
                         <!-- Controls -->
@@ -140,40 +149,34 @@ permissions and limitations under the License.
                     <!-- Panel including S3 object table -->
                     <div class="panel-body">
 
-                        <br>
-                        <p>
-                            This data is provided by <a href="http://www.geneontology.org">The Gene Ontology Resource</a>.
-                            It contains the monthly releases of GO since August 2018 as well as the GO archive reconstructed from 2005.
-                        </p>
-                        <p>
-                            Any work using the Gene Ontology Resource should cite the following:
-                            <blockquote>
-                                    The Gene Ontology Resource: 20 years and still GOing strong.                                     
-                                    
-                                    <footer>
-                                        <cite><a href="https://pubmed.ncbi.nlm.nih.gov/30395331/">>Nucleic Acids Res. Jan 2019;47(D1):D330-D338.</a></cite>
-                                    </footer>                                    
-                            </blockquote>
+                        <!-- DISCLAIMER MESSAGE -->
+                        <div class="disclaimer">
+                            <p>
+                                This data archive is provided by <a href="http://www.geneontology.org">The Gene Ontology Resource</a>.
+                                It contains the monthly releases of GO since August 2018 as well as the GO archive reconstructed from 2005.
+                            </p>
+                            <p>
+                                Any work using the Gene Ontology Resource should cite the following:
+                                <blockquote>
+                                        The Gene Ontology Resource: 20 years and still GOing strong.                                     
+                                        
+                                        <footer>
+                                            <cite><a href="https://pubmed.ncbi.nlm.nih.gov/30395331/">>Nucleic Acids Res. Jan 2019;47(D1):D330-D338.</a></cite>
+                                        </footer>                                    
+                                </blockquote>
 
-                            In addition, we encourage users to cite the release date of GO (e.g. 2020-06-02) used in their analysis to enable the reproducibility of their experiments.
-                        </p>
+                                In addition, we encourage users to cite the release date of GO (e.g. 2020-06-02) used in their analysis to enable the reproducibility of their experiments.
+                            </p>
+                        </div>
 
 
                         <!-- Bucket breadcrumbs -->
-                        <div class="btn" style="margin-top: 15px; margin-left: 10px;">
-                            <span style="margin-top: 10px; display: inline-block; font-weight: 800;">Current folder: </span>
-                            <ul id="breadcrumb" class="btn breadcrumb pull-right">
-                                <li class="active dropdown">
-                                    <span href="#">&lt;bucket&gt;</span>
-                                </li>
-                            </ul>
-                        </div> 
-
-                        <!-- Bucket breadcrumbs
-                        <span style="vertical-align: sub;">Current folder: </span>
-                        <span id="breadcrump" class="btn breadcrump" href="#">&lt;bucket&gt;</span>                         -->
+                        <div style="margin-bottom: 1rem">
+                            <span style="vertical-align: sub; font-weight: 800">Current Folder: </span>
+                            <div id="list_folders"></div>
+                        </div>
                         
-                        <br><br>
+                        
                         <table class="table table-bordered table-hover table-striped" id="tb-s3objects">
                             <thead>
                                 <tr>
@@ -250,6 +253,14 @@ permissions and limitations under the License.
     function object2hrefvirt(bucket, key) {
         var enckey = key.split('/').map(function(x) { return encodeURIComponent(x); }).join('/');
 
+        // added to handle the "../" virtual folder
+        if(key == "../") {
+            enckey = window.location.pathname.substring(1);
+            enckey = enckey.substring(0, enckey.lastIndexOf("/"));
+            enckey = enckey.substring(0, enckey.lastIndexOf("/"));
+            enckey = enckey.trim() == "" ? "" : enckey + "/";
+        }
+
         if (AWS.config.region === "us-east-1") {
             return document.location.protocol + '//' + bucket + '.s3.amazonaws.com/' + enckey;
         } else {
@@ -303,10 +314,6 @@ permissions and limitations under the License.
         return htmlEscape(parts[parts.length - 2] + '/');
     }
 
-    // Remove hash from document URL
-    function removeHash() {
-        history.pushState("", document.title, window.location.pathname + window.location.search);
-    }
 
     // We are going to generate bucket/folder breadcrumbs. The resulting HTML will
     // look something like this:
@@ -320,14 +327,6 @@ permissions and limitations under the License.
     function folder2breadcrumbs(data) {
         console.log('Bucket: ' + data.params.Bucket);
         console.log('Prefix: ' + data.params.Prefix);
-
-        if (data.params.Prefix && data.params.Prefix.length > 0) {
-            console.log('Set hash: ' + data.params.Prefix);
-            window.location.hash = data.params.Prefix;
-        } else {
-            console.log('Remove hash');
-            removeHash();
-        }
 
         // The parts array will contain the bucket name followed by all the
         // segments of the prefix, exploded out as separate strings.
@@ -345,59 +344,22 @@ permissions and limitations under the License.
         // Empty the current breadcrumb list
         $('#breadcrumb li').remove();
 
-        // Now build the new breadcrumb list
-        var buildprefix = '';
-        $.each(parts, function(ii, part) {
-            var ipart;
-
-            // Add the bucket (the bucket is always first)
-            if (ii === 0) {
-                var a1 = $('<a>').attr('href', '#').text(part);
-                ipart = $('<li>').append(a1);
-                a1.click(function(e) {
-                    e.preventDefault();
-                    console.log('Breadcrumb click bucket: ' + data.params.Bucket);
-                    s3exp_config = {
-                        Bucket: data.params.Bucket,
-                        Prefix: '',
-                        Delimiter: data.params.Delimiter
-                    };
-                    (s3exp_lister = s3list(s3exp_config, s3draw)).go();
-                });
-                // Else add the folders within the bucket
-            } else {
-                buildprefix += part + '/';
-
-                if (ii == parts.length - 1) {
-                    ipart = $('<li>').addClass('active').text(part);
-                } else {
-                    var a2 = $('<a>').attr('href', '#').append(part);
-                    ipart = $('<li>').append(a2);
-
-                    // Closure needed to enclose the saved S3 prefix
-                    (function() {
-                        var saveprefix = buildprefix;
-                        // console.log('Part: ' + part + ' has buildprefix: ' + saveprefix);
-                        a2.click(function(e) {
-                            e.preventDefault();
-                            console.log('Breadcrumb click object prefix: ' + saveprefix);
-                            s3exp_config = {
-                                Bucket: data.params.Bucket,
-                                Prefix: saveprefix,
-                                Delimiter: data.params.Delimiter
-                            };
-                            (s3exp_lister = s3list(s3exp_config, s3draw)).go();
-                        });
-                    })();
-                }
-            }
-            $('#breadcrumb').append(ipart);
-        });
     }
 
     function s3draw(data, complete) {
         $('li.li-bucket').remove();
         folder2breadcrumbs(data);
+
+        console.log("s3draw: - data: ", data , " -complete: ", complete);
+
+        // add a way to return to upper folder if we are in a subfolder of the bucket
+        if(data.params.Prefix && data.params.Prefix.includes("/")) {
+            $('#tb-s3objects').DataTable().rows.add([
+                {
+                    Key: "../"
+                }
+            ]);
+        }
 
         // Add each part of current path (S3 bucket plus folder hierarchy) into the breadcrumbs
         $.each(data.CommonPrefixes, function(i, prefix) {
@@ -439,6 +401,7 @@ permissions and limitations under the License.
                     $('#bucket-loader').removeClass('fa-spin');
                     bootbox.alert("Error accessing S3 bucket " + scope.params.Bucket + ". Error: " + err);
                 } else {
+                    console.log("data retrieved: ", data);
                     // console.log('Data: ' + JSON.stringify(data));
                     console.log("Options: " + $("input[name='optionsdepth']:checked").val());
 
@@ -529,6 +492,54 @@ permissions and limitations under the License.
     $(document).ready(function() {
         console.log('ready');
 
+        console.log("Document URL: " + document.URL);
+        var urls = document.URL.split('/');
+        console.log("URL split: " + urls);
+        console.log("s3exp_config(1): ", s3exp_config)
+
+        // Using technique from https://gist.github.com/jlong/2428561
+        // to parse the document URL.
+        var parser = document.createElement('a');
+        parser.href = document.URL;
+
+        // URL format is scheme://[user:password@]domain:port/path?query_string#fragment_id
+        // For example: http://example.com:3000/path/?name=abc#topic
+        console.log("protocol: " + parser.protocol); // => "http:"
+        console.log("hostname: " + parser.hostname); // => "example.com"
+        console.log("port    : " + parser.port); // => "3000"
+        console.log("pathname: " + parser.pathname); // => "/path/"
+        console.log("search  : " + parser.search); // => "?name=abc"
+        console.log("hash    : " + parser.hash); // => "#topic"
+        console.log("host    : " + parser.host); // => "example.com:3000"
+
+
+
+        let lf = document.getElementById("list_folders");
+        let path = parser.pathname;
+        let folders = path.split("/"); // could use .shift()
+        folders[0] = "/";
+        folders.pop();
+        console.log("folders: ", folders);
+        let hierarchy = "";
+        for(let folder of folders) {
+            let btn = document.createElement("a");
+            btn.id = "folder_" + folder;
+            btn.className = "btn btn-primary small-margin"
+            btn.innerHTML = folder;
+            hierarchy += folder;
+            hierarchy = hierarchy.endsWith("/") ? hierarchy : hierarchy + "/";
+            btn.href = parser.protocol + "//" + parser.hostname + hierarchy + "index.html";
+            lf.appendChild(btn);
+        }
+
+
+        path = path.startsWith("/") ? path.substring(1) : path;
+        console.log("path: ", path);
+        let prefix = path.includes("/index.html") ? path.substring(0, path.lastIndexOf("index.html")) : "";
+        console.log("prefix: " + prefix)
+
+
+
         // Click handler for refresh button (to invoke manual refresh)
         $('#bucket-loader').click(function(e) {
             if ($('#bucket-loader').hasClass('fa-spin')) {
@@ -575,15 +586,18 @@ permissions and limitations under the License.
             }
         });
 
+
+        // we could filter out some folders or files here
         function renderObject(data, type, full) {
             if (isthisdocument(s3exp_config.Bucket, data)) {
-                console.log("is this document: " + data);
+                // console.log("is this document: " + data);
                 return fullpath2filename(data);
             } else if (isfolder(data)) {
-                console.log("is folder: " + data);
-                return '<a data-s3="folder" data-prefix="' + htmlEscape(data) + '" href="' + object2hrefvirt(s3exp_config.Bucket, data) + '">' + prefix2folder(data) + '</a>';
+                // console.log("is folder: " + data);
+                console.log("a href= ", object2hrefvirt(s3exp_config.Bucket, data))
+                return '<a data-s3="folder" data-prefix="' + htmlEscape(data) + '" href="' + object2hrefvirt(s3exp_config.Bucket, data) + "index.html" + '">' + prefix2folder(data) + '</a>';
             } else {
-                console.log("not folder/this document: " + data);
+                // console.log("not folder/this document: " + data);
                 return '<a data-s3="object" href="' + object2hrefvirt(s3exp_config.Bucket, data) + '"download="' + fullpath2filename(data) + '">' + fullpath2filename(data) + '</a>';
             }
         }
@@ -650,32 +664,9 @@ permissions and limitations under the License.
 
         // Allow user to hide folders
         $.fn.dataTableExt.afnFiltering.push(function(oSettings, aData, iDataIndex) {
-            console.log("hide folders");
             return $('#hidefolders').is(':checked') ? !isfolder(aData[0]) : true;
         });
 
-        // Delegated event handler for S3 object/folder clicks. This is delegated
-        // because the object/folder rows are added dynamically and we do not want
-        // to have to assign click handlers to each and every row.
-        $('#tb-s3objects').on('click', 'a', function(event) {
-            event.preventDefault();
-            var target = event.target;
-            console.log("target href=" + target.href);
-            console.log("target dataset=" + JSON.stringify(target.dataset));
-
-            // If the user has clicked on a folder then navigate into that folder
-            if (target.dataset.s3 === "folder") {
-                resetDepth();
-                delete s3exp_config.ContinuationToken;
-                s3exp_config.Prefix = target.dataset.prefix;
-                s3exp_config.Delimiter = $("input[name='optionsdepth']:checked").val() == "folder" ? "/" : "";
-                (s3exp_lister = s3list(s3exp_config, s3draw)).go();
-                // Else user has clicked on an object so download it in new window/tab
-            } else {
-                window.open(target.href, '_blank');
-            }
-            return false;
-        });
 
         // Document URL typically looks like this for path-style URLs:
         // - https://s3.amazonaws.com/mybucket1/index.html
@@ -697,24 +688,13 @@ permissions and limitations under the License.
         //
         // If the region was anything other than US Standard then we will also need
         // to infer the region so that we can initialize the S3 SDK properly.
-        console.log("Document URL: " + document.URL);
-        var urls = document.URL.split('/');
-        console.log("URL split: " + urls);
 
-        // Using technique from https://gist.github.com/jlong/2428561
-        // to parse the document URL.
-        var parser = document.createElement('a');
-        parser.href = document.URL;
 
-        // URL format is scheme://[user:password@]domain:port/path?query_string#fragment_id
-        // For example: http://example.com:3000/path/?name=abc#topic
-        console.log("protocol: " + parser.protocol); // => "http:"
-        console.log("hostname: " + parser.hostname); // => "example.com"
-        console.log("port    : " + parser.port); // => "3000"
-        console.log("pathname: " + parser.pathname); // => "/path/"
-        console.log("search  : " + parser.search); // => "?name=abc"
-        console.log("hash    : " + parser.hash); // => "#topic"
-        console.log("host    : " + parser.host); // => "example.com:3000"
+        delete s3exp_config.ContinuationToken;
+        s3exp_config.Prefix = path;
+        s3exp_config.Delimiter = "/";
+        console.log("s3exp_config(2): ", s3exp_config)
+
 
         // If initial bucket has been hard-coded above then use it, else try to
         // derive the initial bucket from the document URL (useful if index.html was
@@ -774,17 +754,23 @@ permissions and limitations under the License.
             console.log("AWS region=" + AWS.config.region);
             console.log("S3 bucket=" + bucket);
 
+            console.log("pathnames: ", pathnames);
+            path = pathnames.join("/");
+            path = path.startsWith("/") ? path.substring(1) : path;
+            console.log("path: ", path);
+            let prefix = path.includes("/index.html") ? path.substring(0, path.lastIndexOf("index.html")) : "";
+            console.log("prefix: " + prefix)
+
             // Create and initialize S3 object
+            console.log("s3exp_config(3): ", s3exp_config);
             s3 = new AWS.S3();
+            s3exp_config.bucket = bucket;
             s3exp_config = {
                 Bucket: bucket,
-                Delimiter: '/'
+                Delimiter: '/',
+                Prefix: prefix
             };
-
-            if (window.location.hash) {
-                console.log("Location hash=" + window.location.hash);
-                s3exp_config.Prefix = window.location.hash.substring(1);
-            }
+            console.log("s3exp_config(4): ", s3exp_config);
 
             // Do initial bucket list
             (s3exp_lister = s3list(s3exp_config, s3draw)).go();
