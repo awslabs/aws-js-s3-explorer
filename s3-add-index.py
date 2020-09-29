@@ -2,7 +2,7 @@ import os, boto3
 from botocore.exceptions import NoCredentialsError
 
 s3 = boto3.resource('s3')
-bucket_name = "geneontology-tmp"
+bucket_name = "geneontology-test"
 bucket = s3.Bucket(bucket_name)
 
 def upload_file(s3client, bucket, local_file, s3_file, content_type):
