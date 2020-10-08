@@ -25,8 +25,11 @@ permissions and limitations under the License.
     <link rel="shortcut icon" href="http://www.geneontology.org/favicon.ico">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css" integrity="sha384-PmY9l28YgO4JwMKbTvgaS7XNZJ30MK9FAZjjzXtlqyZCqBY6X6bXIkM++IkyinN+" crossorigin="anonymous">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap-theme.min.css" integrity="sha384-jzngWsPS6op3fgRCDTESqrEJwRKck+CILhJVO5VvaAZCq8JYf8HsR/HPpBOOPZfR" crossorigin="anonymous">
-    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.12.0/css/all.css">
+    <link href="//netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.datatables.net/1.10.19/css/dataTables.bootstrap.min.css">
+    <link rel="stylesheet" href="http://geneontology.org/css/font-awesome.min.css">
+    
+
     <style type="text/css">
         #wrapper {
             padding-left: 0;
@@ -41,7 +44,7 @@ permissions and limitations under the License.
         }
 
         a {
-            color: #00B7FF;
+            color: rgb(73, 101, 194);
         }
 
         body {
@@ -65,10 +68,29 @@ permissions and limitations under the License.
         }
 
         blockquote { font-size: 14px; font-style: italic }
+        
         p { margin: 10 0 10px; }
-        h1 { font-size: 34px; color: #4965c2; }
-        .logo img { width: 200px; margin-top: 20px; margin-right: 30px }
-        .panel-heading { box-shadow: 0 1px 4px 0 rgba(0,0,0,0.30); }
+        
+        h1 { 
+            display: inline-block;
+            font-size: 34px; 
+            color: #4965c2; 
+            margin-top: 10px;
+        }
+
+        .padding-right {
+            padding-right: 12px;
+        }
+        
+        .logo img { 
+            width: 175px; 
+            margin-right: 30px 
+        }
+
+        .panel-heading { 
+            padding: 10px 10px 10px 15px;
+            box-shadow: 0 1px 4px 0 rgba(0,0,0,0.30); 
+        }
         .panel-body {
             max-width: 1000px;
             margin: 0 auto;        
@@ -78,8 +100,8 @@ permissions and limitations under the License.
         }
 
         .disclaimer {
-            box-shadow: 0 1px 4px 0 rgba(0,0,0,0.30);
-            padding: 2rem;
+            /* box-shadow: 0 1px 4px 0 rgba(0,0,0,0.30); */
+            /* padding: 2rem; */
             margin: 3rem 0rem 6rem 0rem;      
         }
                
@@ -90,6 +112,7 @@ permissions and limitations under the License.
 <!-- <style media="screen" type="text/css"> * { outline: 1px red solid; } </style> -->
 
 <body>
+
     <div id="page-wrapper">
         <div class="row">
             <div class="col-lg-12">
@@ -100,9 +123,9 @@ permissions and limitations under the License.
                         <!-- Title and breadcrumbs -->
                         <div class="btn-group pull-left">
                             <!-- App title -->
-                            <div class="pull-left logo">
+                            <div class="pull-left logo" style="margin-top: 10px;">
                                 <a href="http://www.geneontology.org">
-                                    <img src="https://geneontology-test.s3.amazonaws.com/go-logo.large.png">
+                                    <img src="http://geneontology.org/assets/go-logo.large.png">
                                 </a>
                             </div>
 
@@ -111,6 +134,33 @@ permissions and limitations under the License.
                         <h1>
                             Gene Ontology Data Archive
                         </h1>
+
+
+            <!-- SOCIAL LINKS -->
+            <div class="navbar-right">
+                    <ul class="nav navbar-nav" style="padding-top: 14px;">
+                        <li>
+                            <a href="https://github.com/geneontology" target="blank" style="padding: 8px 3px; font-size: 15px;">
+                                <i class="fa fa-github padding-right" aria-hidden="true"></i>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="https://twitter.com/news4go" target="blank" style="padding: 8px 3px; font-size: 15px;">
+                                <i class="fa fa-twitter padding-right" aria-hidden="true"></i>
+                            </a>
+                        </li>
+                        <li style="margin-right: 5px">
+                            <a href="https://www.facebook.com/pages/Gene-Ontology/305908656519" target="blank" style="padding: 8px 3px; font-size: 15px;">
+                                <i class="fa fa-facebook padding-right" aria-hidden="true"></i>
+                            </a>
+                        </li>
+                    </ul>
+    
+                    <a href="https://www.alliancegenome.org" target="blank" alt="Alliance of Genome Resources" style="padding-right: 10px;">
+                        <img src="http://geneontology.org/assets/ALLIANCE-logo-nobackground_foundingmember.png" alt="Alliance of Genome Resources" style="height: 60px; margin-right: 10px;"/>
+                    </a>
+        
+                </div>
 
                         <!-- Controls -->
                         <div id="navbuttons" class="pull-right" style="display:none">
@@ -152,24 +202,11 @@ permissions and limitations under the License.
                         <!-- DISCLAIMER MESSAGE -->
                         <div class="disclaimer">
                             <p>
-                                This data archive is provided by <a href="http://www.geneontology.org">The Gene Ontology Resource</a>.
-                                <!-- It contains the DOI monthly releases of GO since August 2018 as well as the GO archive reconstructed from 2005. -->
-                                It contains monthly releases of GO from 2002 to 2018 and was built from the legacy GO CVS, SVN and archive products.
-                                To improve reusability, file structure and file format were made consistent with the <a href="http://geneontology.org/docs/downloads/">DOI monthly releases of GO</a> produced since 2018.
-                            </p>
-                            <p>
-                                Work using the Gene Ontology Resource should cite:
-                                <blockquote>
-                                        The Gene Ontology Resource: 20 years and still GOing strong.                                     
-                                        
-                                        <footer>
-                                            <cite><a href="https://pubmed.ncbi.nlm.nih.gov/30395331/">>Nucleic Acids Res. Jan 2019;47(D1):D330-D338.</a></cite>
-                                        </footer>                                    
-                                </blockquote>
-
-                                Users are also encouraged to cite the release date of GO (e.g. 2005-04-01) used in their analysis to enable the reproducibility of their experiments.
+                                The Gene Ontology archive provides GO data - ontology, annotations, and associated files - from March 2004. The archive was built from the legacy GO CVS, SVN and archive products. The archive was reconstructed on a monthly basis, similar to our current release cycle, and the file structure and file format were made consistent with the GO monthly releases produced since 2018.
                                 <br><br>
-                                Need help, spot an issue ? Contact us through the <a href="http://help.geneontology.org">GO Helpdesk</a>.
+                                Users are also encouraged to cite the release date of GO (e.g. 2005-04-01) used in their analysis to enable the reproducibility of their experiments.                                    
+                                <br><br>
+                                Questions or suggestions can be sent to the <a href="http://help.geneontology.org">GO Helpdesk</a>.
                             </p>
                         </div>
 
@@ -198,6 +235,7 @@ permissions and limitations under the License.
             </div>
         </div>
     </div>
+  
 </body>
 
 </html>
