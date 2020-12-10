@@ -4,38 +4,37 @@ from botocore.exceptions import NoCredentialsError
 from s3_add_file import copy_file
 
 
-def rewrite_index(in_file, bucket_name):
+def rewrite_index(in_file, out_file, bucket_name):
     file = open(in_file, "r")
     line = file.readline()
     lines = []
     while line:
-        line = file.readline()
         if "s3exp_config.Bucket = " in line:
             line = line[0:line.index("\"")] + "\"" + bucket_name + "\"\n"
         lines.append(line)
+        line = file.readline()
 
     file.close()    
     custom_index = "".join(lines)
     
-    file = open("toto.html", "w")
+    file = open(out_file, "w")
     file.write(custom_index)
     file.close()
 
 
 def print_help():
-    print('\nUsage: python s3-add-custom-index.py -i <input:index_file> -o <s3:bucket_name>\n')
+    print('\nUsage: python s3-add-custom-index.py -o <s3:bucket_name>\n')
 
 
 def main(argv):
-    in_file = ''
     s3_bucket = ''
 
-    if len(argv) < 4:
+    if len(argv) < 2:
         print_help()
         sys.exit(2)
 
     try:
-        opts, argv = getopt.getopt(argv,"i:o:", ["input=","output="])
+        opts, argv = getopt.getopt(argv,"o:", ["output="])
     except getopt.GetoptError:
         print_help()
         sys.exit(2)
@@ -44,13 +43,11 @@ def main(argv):
         if opt == '-h':
             print_help()
             sys.exit()
-        elif opt in ("-i", "--input"):
-            in_file = arg
         elif opt in ("-o", "--output"):
             s3_bucket = arg
 
-    rewrite_index(in_file, s3_bucket)
-    copy_file(in_file, s3_bucket)
+    rewrite_index("index-src.html", "index.html", s3_bucket)
+    copy_file("index.html", s3_bucket)
     
 
 if __name__ == "__main__":
