@@ -14,6 +14,12 @@ or in the "license" file accompanying this file. This file is distributed
 on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
 either express or implied. See the License for the specific language governing
 permissions and limitations under the License.
+
+===
+This is further modified for the Gene Ontology project by Laurent-Philippe Albou, PhD 
+Please contact lpalbou@gmail.com for questions or issues
+===
+
 -->
 
 <html lang="en">
@@ -100,8 +106,6 @@ permissions and limitations under the License.
         }
 
         .disclaimer {
-            /* box-shadow: 0 1px 4px 0 rgba(0,0,0,0.30); */
-            /* padding: 2rem; */
             margin: 3rem 0rem 6rem 0rem;      
         }
                
@@ -297,17 +301,19 @@ permissions and limitations under the License.
 
         // added to handle the "../" virtual folder
         if(key == "../") {
-            enckey = window.location.pathname.substring(1);
-            enckey = enckey.substring(0, enckey.lastIndexOf("/"));
-            enckey = enckey.substring(0, enckey.lastIndexOf("/"));
-            enckey = enckey.trim() == "" ? "" : enckey + "/";
+            enckey = "../";
         }
 
-        if (AWS.config.region === "us-east-1") {
-            return document.location.protocol + '//' + bucket + '.s3.amazonaws.com/' + enckey;
-        } else {
-            return document.location.protocol + '//' + bucket + '.s3-' + AWS.config.region + '.amazonaws.com/' + enckey;
-        }
+        var parser = document.createElement('a');
+        parser.href = document.URL;
+        var pathnames = parser.pathname.split('/');
+        path2 = pathnames.join("/");
+        path2 = path2.startsWith("/") ? path2.substring(1) : path2;
+
+        // This step is down to produce local instead of absolute link
+        prefix = path2.includes("/index.html") ? path2.substring(0, path2.lastIndexOf("index.html")) : "";   
+        enckey = enckey.replace(prefix, "");
+        return enckey;
     }
 
     function object2hrefpath(bucket, key) {
@@ -710,111 +716,25 @@ permissions and limitations under the License.
         });
 
 
-        // Document URL typically looks like this for path-style URLs:
-        // - https://s3.amazonaws.com/mybucket1/index.html
-        // - https://s3-us-west-2.amazonaws.com/mybucket2/index.html
-        //
-        // Document URL typically looks like this for virtual-hosted-style URLs:
-        // - https://mybucket1.s3.amazonaws.com/index.html
-        // - https://mybucket2.s3-us-west-2.amazonaws.com/index.html
-        //
-        // Document URL typically looks like this for S3 website hosting:
-        // - http://mybucket3.s3-website-us-east-1.amazonaws.com/
-        // - http://mybucket4.s3-website.eu-central-1.amazonaws.com/
+        var hostnames = parser.hostname.split('.');
+        var pathnames = parser.pathname.split('/');
+        
 
-        // TODO: need to support S3 website hosting option
-        //
-        // If we're launched from a bucket then let's try to determine the bucket
-        // name so we can query it immediately, without requiring the user to
-        // supply the bucket name.
-        //
-        // If the region was anything other than US Standard then we will also need
-        // to infer the region so that we can initialize the S3 SDK properly.
-
-
+        // Setting this avoid the URL parsing in case of redirection / CNAME
         delete s3exp_config.ContinuationToken;
-        s3exp_config.Prefix = path;
         s3exp_config.Delimiter = "/";
-        console.log("s3exp_config(2): ", s3exp_config)
+        s3exp_config.Bucket = "geneontology-reroute"
+        s3exp_config.Region = "us-east-1"
+        path2 = pathnames.join("/");
+        path2 = path2.startsWith("/") ? path2.substring(1) : path2;
+        s3exp_config.Prefix = path2.includes("/index.html") ? path2.substring(0, path2.lastIndexOf("index.html")) : "";       
+        console.log("s3exp_config: ", s3exp_config)
 
 
         // If initial bucket has been hard-coded above then use it, else try to
         // derive the initial bucket from the document URL (useful if index.html was
         // launched directly from within a bucket), else prompt the user.
         if (s3exp_config.Bucket) {
-            (s3exp_lister = s3list(s3exp_config, s3draw)).go();
-        } else if (parser.hostname.endsWith('amazonaws.com')) {
-            // Hostname is likely to be in one of the following forms:
-            // - s3.amazonaws.com
-            // - bucket1.s3.amazonaws.com
-            // - s3-us-west-2.amazonaws.com
-            // - bucket2.s3-us-west-2.amazonaws.com
-
-            // If using static website hosting, the hostname will be of the form:
-            // - bucket.s3-website.eu-central-1.amazonaws.com/
-
-            // The following is also a legal form, but we do not support it, so
-            // you should use s3-eu-central-1 rather than s3.eu-central-1:
-            // - bucket3.s3.eu-central-1.amazonaws.com
-
-            var bucket;
-            var region;
-            var hostnames = parser.hostname.split('.');
-            var pathnames = parser.pathname.split('/');
-
-            console.log("count of words in hostname=" + hostnames.length);
-            console.log("count of words in pathname=" + pathnames.length);
-
-            console.log("hostnames=" + hostnames);
-            console.log("pathnames=" + pathnames);
-
-            // If bucket prefix not included in hostname
-            if (hostnames[0].match(/^s3-/) || hostnames[0].match(/^s3$/)) {
-                bucket = pathnames[1];
-                region = hostnames[0];
-                console.log("path bucket=" + bucket);
-                console.log("path region=" + region);
-            } else {
-                bucket = hostnames[0];
-                region = hostnames[hostnames.length - 3];
-                console.log("host bucket=" + bucket);
-                console.log("host region=" + region);
-            }
-
-            // If we found statically-hosted website prefix or explicit region, for
-            // example s3-us-west-2, then get region else use the default of US Standard
-            if (region !== 's3') {
-                if (region.startsWith('s3-website-')) {
-                    AWS.config.region = region.substring(11);
-                } else if (region.startsWith('s3-') || region.startsWith('s3.')) {
-                    AWS.config.region = region.substring(3);
-                } else {
-                    AWS.config.region = region;
-                }
-            }
-
-            console.log("AWS region=" + AWS.config.region);
-            console.log("S3 bucket=" + bucket);
-
-            console.log("pathnames: ", pathnames);
-            path = pathnames.join("/");
-            path = path.startsWith("/") ? path.substring(1) : path;
-            console.log("path: ", path);
-            let prefix = path.includes("/index.html") ? path.substring(0, path.lastIndexOf("index.html")) : "";
-            console.log("prefix: " + prefix)
-
-            // Create and initialize S3 object
-            console.log("s3exp_config(3): ", s3exp_config);
-            s3 = new AWS.S3();
-            s3exp_config.bucket = bucket;
-            s3exp_config = {
-                Bucket: bucket,
-                Delimiter: '/',
-                Prefix: prefix
-            };
-            console.log("s3exp_config(4): ", s3exp_config);
-
-            // Do initial bucket list
             (s3exp_lister = s3list(s3exp_config, s3draw)).go();
         } else {
             promptForBucketInput();
