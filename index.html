@@ -724,7 +724,7 @@ Please contact lpalbou@gmail.com for questions or issues
         delete s3exp_config.ContinuationToken;
         s3exp_config.Delimiter = "/";
         s3exp_config.Bucket = "geneontology-reroute"
-        s3exp_config.Region = "us-east-1"
+        // s3exp_config.Region = "us-east-1"
         path2 = pathnames.join("/");
         path2 = path2.startsWith("/") ? path2.substring(1) : path2;
         s3exp_config.Prefix = path2.includes("/index.html") ? path2.substring(0, path2.lastIndexOf("index.html")) : "";       

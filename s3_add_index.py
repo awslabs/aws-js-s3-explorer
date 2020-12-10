@@ -46,7 +46,7 @@ def main(argv):
         elif opt in ("-o", "--output"):
             s3_bucket = arg
 
-    rewrite_index("index-src.html", "index.html", s3_bucket)
+    rewrite_index("index.html", "index.html", s3_bucket)
     copy_file("index.html", s3_bucket)
     
 
