@@ -112,8 +112,8 @@ To do this, click your bucket in the bucket list within the Amazon S3 Console an
       "*"
     ],
     "AllowedMethods": [
-      "HEAD ",
-      "GET "
+      "HEAD",
+      "GET"
     ],
     "AllowedOrigins": [
       "https://s3.amazonaws.com"
@@ -132,9 +132,12 @@ If your S3 bucket is hosted outside of the US East (Northern Virginia) region (u
 
 To use path-style URLs, you should supplement your CORS configuration to include additional allowed origins representing the region-specific S3 endpoints, for example s3-us-west-2.amazonaws.com and s3.us-west-2.amazonaws.com, as follows:
 
-```xml
-    <AllowedOrigin>https://s3-us-west-2.amazonaws.com</AllowedOrigin>
-    <AllowedOrigin>https://s3.us-west-2.amazonaws.com</AllowedOrigin>
+```json
+    "AllowedOrigins": [
+      "https://s3.amazonaws.com",
+      "https://s3-us-west-2.amazonaws.com",
+      "https://s3.us-west-2.amazonaws.com"
+    ]
 ```
 
 ### Static Website Hosting
@@ -150,14 +153,18 @@ You also have the option to enable 'Static Website Hosting' on your S3 bucket. I
 
 If you choose to do this, then you will also need to modify the CORS configuration above to include:
 
-```xml
-  <AllowedOrigin>https://BUCKET-NAME.s3.amazonaws.com</AllowedOrigin>
+```json
+  "AllowedOrigins": [
+    "https://BUCKET-NAME.s3.amazonaws.com"
+  ]
 ```
 
 Or as follows, if in a bucket outside of US East (N. Virginia):
 
-```xml
-  <AllowedOrigin>https://BUCKET-NAME.s3.us-west-2.amazonaws.com</AllowedOrigin>
+```json
+  "AllowedOrigins": [
+    "https://BUCKET-NAME.s3.us-west-2.amazonaws.com"
+  ]
 ```
 
 Note that when you configure a bucket for website hosting, the two general forms of an Amazon S3 website endpoint are as follows:
