@@ -105,17 +105,25 @@ To configure your bucket to allow cross-origin requests, you create a CORS confi
 
 To do this, click your bucket in the bucket list within the Amazon S3 Console and then click the Permissions tab. Click the CORS Configuration button. The CORS Configuration Editor panel will open up with a textfield where you can enter a CORS Configuration. Enter the following configuration:
 
-```xml
-<CORSConfiguration xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
-  <CORSRule>
-    <AllowedOrigin>https://s3.amazonaws.com</AllowedOrigin>
-    <AllowedMethod>HEAD</AllowedMethod>
-    <AllowedMethod>GET</AllowedMethod>
-    <AllowedHeader>*</AllowedHeader>
-    <ExposeHeader>ETag</ExposeHeader>
-    <ExposeHeader>x-amz-meta-custom-header</ExposeHeader>
-  </CORSRule>
-</CORSConfiguration>
+```json
+[
+  {
+    "AllowedHeaders": [
+      "*"
+    ],
+    "AllowedMethods": [
+      "HEAD ",
+      "GET "
+    ],
+    "AllowedOrigins": [
+      "https://s3.amazonaws.com"
+    ],
+    "ExposeHeaders": [
+      "ETag",
+      "x-amz-meta-custom-header"
+    ]
+  }
+]
 ```
 
 Note that this does not authorize the user to perform any actions on the bucket, it simply enables the browser's security model to allow a request to S3. Actual permissions for the user must be configured either via bucket permissions, or IAM role level permissions.
