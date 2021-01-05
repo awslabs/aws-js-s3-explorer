@@ -101,7 +101,7 @@ If you decide to access your index.html file via a path-style URL (#1 above) the
 
 For security reasons, browsers normally block requests by JavaScript code to access URLs that are unrelated to the source of the code (such as the contents of your bucket), but with CORS, we can configure your bucket to explicitly enable JavaScript to do this.
 
-To configure your bucket to allow cross-origin requests, you create a CORS configuration, which is an XML document with rules that identify the origins that you will allow to access your bucket, the operations (HTTP methods) will support for each origin, and other operation-specific information.
+To configure your bucket to allow cross-origin requests, you create a CORS configuration, which is an JSON document with rules that identify the origins that you will allow to access your bucket, the operations (HTTP methods) will support for each origin, and other operation-specific information.
 
 To do this, click your bucket in the bucket list within the Amazon S3 Console and then click the Permissions tab. Click the CORS Configuration button. The CORS Configuration Editor panel will open up with a textfield where you can enter a CORS Configuration. Enter the following configuration:
 
