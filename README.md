@@ -101,21 +101,29 @@ If you decide to access your index.html file via a path-style URL (#1 above) the
 
 For security reasons, browsers normally block requests by JavaScript code to access URLs that are unrelated to the source of the code (such as the contents of your bucket), but with CORS, we can configure your bucket to explicitly enable JavaScript to do this.
 
-To configure your bucket to allow cross-origin requests, you create a CORS configuration, which is an XML document with rules that identify the origins that you will allow to access your bucket, the operations (HTTP methods) will support for each origin, and other operation-specific information.
+To configure your bucket to allow cross-origin requests, you create a CORS configuration, which is a JSON document with rules that identify the origins that you will allow to access your bucket, the operations (HTTP methods) will support for each origin, and other operation-specific information.
 
 To do this, click your bucket in the bucket list within the Amazon S3 Console and then click the Permissions tab. Click the CORS Configuration button. The CORS Configuration Editor panel will open up with a textfield where you can enter a CORS Configuration. Enter the following configuration:
 
-```xml
-<CORSConfiguration xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
-  <CORSRule>
-    <AllowedOrigin>https://s3.amazonaws.com</AllowedOrigin>
-    <AllowedMethod>HEAD</AllowedMethod>
-    <AllowedMethod>GET</AllowedMethod>
-    <AllowedHeader>*</AllowedHeader>
-    <ExposeHeader>ETag</ExposeHeader>
-    <ExposeHeader>x-amz-meta-custom-header</ExposeHeader>
-  </CORSRule>
-</CORSConfiguration>
+```json
+[
+  {
+    "AllowedHeaders": [
+      "*"
+    ],
+    "AllowedMethods": [
+      "HEAD",
+      "GET"
+    ],
+    "AllowedOrigins": [
+      "https://s3.amazonaws.com"
+    ],
+    "ExposeHeaders": [
+      "ETag",
+      "x-amz-meta-custom-header"
+    ]
+  }
+]
 ```
 
 Note that this does not authorize the user to perform any actions on the bucket, it simply enables the browser's security model to allow a request to S3. Actual permissions for the user must be configured either via bucket permissions, or IAM role level permissions.
@@ -124,9 +132,12 @@ If your S3 bucket is hosted outside of the US East (Northern Virginia) region (u
 
 To use path-style URLs, you should supplement your CORS configuration to include additional allowed origins representing the region-specific S3 endpoints, for example s3-us-west-2.amazonaws.com and s3.us-west-2.amazonaws.com, as follows:
 
-```xml
-    <AllowedOrigin>https://s3-us-west-2.amazonaws.com</AllowedOrigin>
-    <AllowedOrigin>https://s3.us-west-2.amazonaws.com</AllowedOrigin>
+```json
+    "AllowedOrigins": [
+      "https://s3.amazonaws.com",
+      "https://s3-us-west-2.amazonaws.com",
+      "https://s3.us-west-2.amazonaws.com"
+    ]
 ```
 
 ### Static Website Hosting
@@ -142,14 +153,18 @@ You also have the option to enable 'Static Website Hosting' on your S3 bucket. I
 
 If you choose to do this, then you will also need to modify the CORS configuration above to include:
 
-```xml
-  <AllowedOrigin>https://BUCKET-NAME.s3.amazonaws.com</AllowedOrigin>
+```json
+  "AllowedOrigins": [
+    "https://BUCKET-NAME.s3.amazonaws.com"
+  ]
 ```
 
 Or as follows, if in a bucket outside of US East (N. Virginia):
 
-```xml
-  <AllowedOrigin>https://BUCKET-NAME.s3.us-west-2.amazonaws.com</AllowedOrigin>
+```json
+  "AllowedOrigins": [
+    "https://BUCKET-NAME.s3.us-west-2.amazonaws.com"
+  ]
 ```
 
 Note that when you configure a bucket for website hosting, the two general forms of an Amazon S3 website endpoint are as follows:
