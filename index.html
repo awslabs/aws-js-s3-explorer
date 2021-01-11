@@ -54,11 +54,14 @@ Please contact lpalbou@gmail.com for questions or issues
         }
 
         body {
-            font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+            font-family: "Lato", sans-serif;
+            font-size: 16px;
+            line-height: 1.6;
         }
 
         td {
-            font: 12px "Lucida Grande", Helvetica, Arial, sans-serif;
+            font-family: "Lato", sans-serif;
+            font-size: 12px;
         }
 
         .title {
@@ -206,11 +209,13 @@ Please contact lpalbou@gmail.com for questions or issues
                         <!-- DISCLAIMER MESSAGE -->
                         <div class="disclaimer">
                             <p>
-                                The Gene Ontology archive provides GO data - ontology, annotations, and associated files - from March 2004. The archive was built from the legacy GO CVS, SVN and archive products. The archive was reconstructed on a monthly basis, similar to our current release cycle, and the file structure and file format were made consistent with the GO monthly releases produced since 2018.
+                                The <b>Gene Ontology archive</b> provides GO data - ontology, annotations, and associated files - starting from March 2004. The archive was built from the legacy GO CVS, SVN and archive products to reconstruct GO releases on a monthly basis, similar to our current release cycle. The file structure and file format were made consistent with the current GO monthly releases produced since 2018.
                                 <br><br>
-                                Users are also encouraged to cite the release date of GO (e.g. 2005-04-01) used in their analysis to enable the reproducibility of their experiments.                                    
+                                File structure and format are further described in the [ <a href="http://geneontology.org/docs/archives/">GO Archive documentation</a> ].
+                                <br>
+                                Questions or suggestions can be sent to the [ <a href="http://help.geneontology.org">GO Helpdesk</a> ].
                                 <br><br>
-                                Questions or suggestions can be sent to the <a href="http://help.geneontology.org">GO Helpdesk</a>.
+                                <b>Note</b>: <i>users are encouraged to cite the date of the GO release (e.g. 2005-04-01) used in their analysis to enable the reproducibility of their experiments.</i>
                             </p>
                         </div>
 
@@ -253,7 +258,10 @@ Please contact lpalbou@gmail.com for questions or issues
 <script src="https://cdn.datatables.net/1.10.19/js/dataTables.bootstrap.min.js"></script>
 
 <script type="text/javascript">
-    var HIDE_INDEX = true;
+    const VERBOSE = false;
+    const HIDE_INDEX = true;
+    const ADD_INDEX_HTML = true;
+
     var s3exp_config = {
         Region: '',
         Bucket: '',
@@ -269,7 +277,7 @@ Please contact lpalbou@gmail.com for questions or issues
     };
 
     AWS.config.region = 'us-east-1';
-    console.log('Region: ' + AWS.config.region);
+    if(VERBOSE) { console.log('Region: ' + AWS.config.region); }
 
     // Initialize S3 SDK and the moment library (for time formatting utilities)
     var s3 = new AWS.S3();
@@ -311,7 +319,7 @@ Please contact lpalbou@gmail.com for questions or issues
         path2 = path2.startsWith("/") ? path2.substring(1) : path2;
 
         // This step is down to produce local instead of absolute link
-        prefix = path2.includes("/index.html") ? path2.substring(0, path2.lastIndexOf("index.html")) : "";   
+        prefix = path2.substring(0, path2.lastIndexOf("/") + 1);
         enckey = enckey.replace(prefix, "");
         return enckey;
     }
@@ -339,7 +347,7 @@ Please contact lpalbou@gmail.com for questions or issues
     }
 
     function isthisdocument(bucket, key) {
-        return key === "index.html";
+        return key.includes("index.html");
     }
 
     function isfolder(path) {
@@ -373,8 +381,10 @@ Please contact lpalbou@gmail.com for questions or issues
     // Note: this code is a little complex right now so it would be good to find
     // a simpler way to create the breadcrumbs.
     function folder2breadcrumbs(data) {
-        console.log('Bucket: ' + data.params.Bucket);
-        console.log('Prefix: ' + data.params.Prefix);
+        if(VERBOSE) { 
+            console.log('Bucket: ' + data.params.Bucket);
+            console.log('Prefix: ' + data.params.Prefix);
+        }
 
         // The parts array will contain the bucket name followed by all the
         // segments of the prefix, exploded out as separate strings.
@@ -387,7 +397,7 @@ Please contact lpalbou@gmail.com for questions or issues
                 data.params.Prefix.split('/'));
         }
 
-        console.log('Parts: ' + parts + ' (length=' + parts.length + ')');
+        if(VERBOSE) { console.log('Parts: ' + parts + ' (length=' + parts.length + ')'); }
 
         // Empty the current breadcrumb list
         $('#breadcrumb li').remove();
@@ -398,7 +408,7 @@ Please contact lpalbou@gmail.com for questions or issues
         $('li.li-bucket').remove();
         folder2breadcrumbs(data);
 
-        console.log("s3draw: - data: ", data , " -complete: ", complete);
+        if(VERBOSE) { console.log("s3draw: - data: ", data , " -complete: ", complete); }
 
         // add a way to return to upper folder if we are in a subfolder of the bucket
         if(data.params.Prefix && data.params.Prefix.includes("/")) {
@@ -421,7 +431,7 @@ Please contact lpalbou@gmail.com for questions or issues
     }
 
     function s3list(config, completecb) {
-        console.log('s3list config: ' + JSON.stringify(config));
+        if(VERBOSE) { console.log('s3list config: ' + JSON.stringify(config)); }
         var params = {
             Bucket: config.Bucket,
             Prefix: config.Prefix,
@@ -449,9 +459,11 @@ Please contact lpalbou@gmail.com for questions or issues
                     $('#bucket-loader').removeClass('fa-spin');
                     bootbox.alert("Error accessing S3 bucket " + scope.params.Bucket + ". Error: " + err);
                 } else {
-                    console.log("data retrieved: ", data);
-                    // console.log('Data: ' + JSON.stringify(data));
-                    console.log("Options: " + $("input[name='optionsdepth']:checked").val());
+                    if(VERBOSE) { 
+                        console.log("data retrieved: ", data);
+                        // console.log('Data: ' + JSON.stringify(data));
+                        console.log("Options: " + $("input[name='optionsdepth']:checked").val());
+                    }
 
                     // Store marker before filtering data
                     if (data.IsTruncated) {
@@ -462,17 +474,15 @@ Please contact lpalbou@gmail.com for questions or issues
 
                     // Filter the folders out of the listed S3 objects
                     // (could probably be done more efficiently)
-                    console.log("Filter: remove folders");
+                    if(VERBOSE) { console.log("Filter: remove folders"); }
                     data.Contents = data.Contents.filter(function(el) {
                         return el.Key !== scope.params.Prefix;
                     });
 
                     // Optionally, filter the root index.html out of the listed S3 objects
                     if (HIDE_INDEX) {
-                        console.log("Filter: remove index.html");
-                        data.Contents = data.Contents.filter(function(el) {
-                            return el.Key !== "index.html";
-                        });
+                        if(VERBOSE) { console.log("Filter: remove index.html"); }
+                        data.Contents = data.Contents.filter(elt => !elt.Key.includes("index.html"));
                     }
 
                     // Accumulate the S3 objects and common prefixes
@@ -483,12 +493,12 @@ Please contact lpalbou@gmail.com for questions or issues
                     $('#badgecount').text(scope.Contents.length + scope.CommonPrefixes.length);
 
                     if (scope.stop) {
-                        console.log('Bucket ' + scope.params.Bucket + ' stopped');
+                        if(VERBOSE) { console.log('Bucket ' + scope.params.Bucket + ' stopped'); }
                     } else if (data.IsTruncated) {
-                        console.log('Bucket ' + scope.params.Bucket + ' truncated');
+                        if(VERBOSE) { console.log('Bucket ' + scope.params.Bucket + ' truncated'); }
                         s3.makeUnauthenticatedRequest('listObjectsV2', scope.params, scope.cb);
                     } else {
-                        console.log('Bucket ' + scope.params.Bucket + ' has ' + scope.Contents.length + ' objects, including ' + scope.CommonPrefixes.length + ' prefixes');
+                        if(VERBOSE) { console.log('Bucket ' + scope.params.Bucket + ' has ' + scope.Contents.length + ' objects, including ' + scope.CommonPrefixes.length + ' prefixes'); }
                         delete scope.params.ContinuationToken;
                         if (scope.completecb) {
                             scope.completecb(scope, true);
@@ -538,28 +548,37 @@ Please contact lpalbou@gmail.com for questions or issues
     }
 
     $(document).ready(function() {
-        console.log('ready');
-
-        console.log("Document URL: " + document.URL);
+        if(VERBOSE) {
+            console.log('ready');
+            console.log("Document URL: " + document.URL);
+        }
         var urls = document.URL.split('/');
-        console.log("URL split: " + urls);
-        console.log("s3exp_config(1): ", s3exp_config)
+        if(VERBOSE) {
+            console.log("URL split: " + urls);
+            console.log("s3exp_config(1): ", s3exp_config)
+        }
 
         // Using technique from https://gist.github.com/jlong/2428561
         // to parse the document URL.
         var parser = document.createElement('a');
         parser.href = document.URL;
 
+
+        if(ADD_INDEX_HTML && !parser.pathname.endsWith("index.html")) {
+            parser.pathname = parser.pathname + "index.html";
+        }
+
         // URL format is scheme://[user:password@]domain:port/path?query_string#fragment_id
         // For example: http://example.com:3000/path/?name=abc#topic
-        console.log("protocol: " + parser.protocol); // => "http:"
-        console.log("hostname: " + parser.hostname); // => "example.com"
-        console.log("port    : " + parser.port); // => "3000"
-        console.log("pathname: " + parser.pathname); // => "/path/"
-        console.log("search  : " + parser.search); // => "?name=abc"
-        console.log("hash    : " + parser.hash); // => "#topic"
-        console.log("host    : " + parser.host); // => "example.com:3000"
-
+        if(VERBOSE) {
+            console.log("protocol: " + parser.protocol); // => "http:"
+            console.log("hostname: " + parser.hostname); // => "example.com"
+            console.log("port    : " + parser.port); // => "3000"
+            console.log("pathname: " + parser.pathname); // => "/path/"
+            console.log("search  : " + parser.search); // => "?name=abc"
+            console.log("hash    : " + parser.hash); // => "#topic"
+            console.log("host    : " + parser.host); // => "example.com:3000"
+        }
 
 
         let lf = document.getElementById("list_folders");
@@ -567,7 +586,7 @@ Please contact lpalbou@gmail.com for questions or issues
         let folders = path.split("/"); // could use .shift()
         folders[0] = "/";
         folders.pop();
-        console.log("folders: ", folders);
+        if(VERBOSE) { console.log("folders: ", folders); }
         let hierarchy = "";
         for(let folder of folders) {
             let btn = document.createElement("a");
@@ -582,9 +601,9 @@ Please contact lpalbou@gmail.com for questions or issues
 
 
         path = path.startsWith("/") ? path.substring(1) : path;
-        console.log("path: ", path);
+        if(VERBOSE) { console.log("path: ", path); }
         let prefix = path.includes("/index.html") ? path.substring(0, path.lastIndexOf("index.html")) : "";
-        console.log("prefix: " + prefix)
+        if(VERBOSE) { console.log("prefix: " + prefix) }
 
 
 
@@ -611,12 +630,14 @@ Please contact lpalbou@gmail.com for questions or issues
 
         // Folder/Bucket radio button handler
         $("input:radio[name='optionsdepth']").change(function() {
-            console.log("Folder/Bucket option change to " + $(this).val());
-            console.log("Change options: " + $("input[name='optionsdepth']:checked").val());
+            if(VERBOSE) {
+                console.log("Folder/Bucket option change to " + $(this).val());
+                console.log("Change options: " + $("input[name='optionsdepth']:checked").val());
+            }
 
             // If user selected deep then we do need to do a full list
             if ($(this).val() == 'bucket') {
-                console.log("Switch to bucket");
+                if(VERBOSE) { console.log("Switch to bucket"); }
                 var choice = $(this).val();
                 $('#tb-s3objects').DataTable().column(1).visible(choice === 'bucket');
                 delete s3exp_config.ContinuationToken;
@@ -625,7 +646,7 @@ Please contact lpalbou@gmail.com for questions or issues
                 (s3exp_lister = s3list(s3exp_config, s3draw)).go();
                 // Else user selected folder then can do a delimiter list
             } else {
-                console.log("Switch to folder");
+                if(VERBOSE) { console.log("Switch to folder"); }
                 $('#tb-s3objects').DataTable().column(1).visible(false);
                 delete s3exp_config.ContinuationToken;
                 delete s3exp_config.Prefix;
@@ -638,11 +659,11 @@ Please contact lpalbou@gmail.com for questions or issues
         // we could filter out some folders or files here
         function renderObject(data, type, full) {
             if (isthisdocument(s3exp_config.Bucket, data)) {
-                // console.log("is this document: " + data);
+                console.log("is this document: " + data);
                 return fullpath2filename(data);
             } else if (isfolder(data)) {
                 // console.log("is folder: " + data);
-                console.log("a href= ", object2hrefvirt(s3exp_config.Bucket, data))
+                if(VERBOSE) { console.log("a href= ", object2hrefvirt(s3exp_config.Bucket, data)) }
                 return '<a data-s3="folder" data-prefix="' + htmlEscape(data) + '" href="' + object2hrefvirt(s3exp_config.Bucket, data) + "index.html" + '">' + prefix2folder(data) + '</a>';
             } else {
                 // console.log("not folder/this document: " + data);
@@ -695,8 +716,7 @@ Please contact lpalbou@gmail.com for questions or issues
         });
 
         $('#tb-s3objects').DataTable().column(s3exp_columns.key).visible(false);
-        console.log("jQuery version=" + $.fn.jquery);
-
+        
         // Custom sort for the Key column so that folders appear before objects
         $.fn.dataTableExt.oSort['key-asc'] = function(a, b) {
             var x = (isfolder(a) ? "0-" + a : "1-" + a).toLowerCase();
@@ -728,7 +748,7 @@ Please contact lpalbou@gmail.com for questions or issues
         path2 = pathnames.join("/");
         path2 = path2.startsWith("/") ? path2.substring(1) : path2;
         s3exp_config.Prefix = path2.includes("/index.html") ? path2.substring(0, path2.lastIndexOf("index.html")) : "";       
-        console.log("s3exp_config: ", s3exp_config)
+        if(VERBOSE) { console.log("s3exp_config: ", s3exp_config); }
 
 
         // If initial bucket has been hard-coded above then use it, else try to
