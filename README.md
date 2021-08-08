@@ -173,7 +173,7 @@ If you intend to allow read-only access from BUCKET1, which hosts S3 Explorer, t
       "x-amz-server-side-encryption",
       "x-amz-request-id",
       "x-amz-id-2",
-      "date'
+      "date"
     ]
   }
 ]
@@ -206,7 +206,7 @@ If you intend to allow modifications to objects in BUCKET2, for example deleting
       "x-amz-server-side-encryption",
       "x-amz-request-id",
       "x-amz-id-2",
-      "date'
+      "date"
     ]
   }
 ]
