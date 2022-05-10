@@ -160,8 +160,8 @@ permissions and limitations under the License.
 <script type="text/javascript">
     var HIDE_INDEX = true;
     var s3exp_config = {
-        Region: '',
-        Bucket: '',
+        Region: 'ap-northeast-1',
+        Bucket: 'api-infra-bucket',
         Prefix: '',
         Delimiter: '/'
     };
@@ -173,7 +173,7 @@ permissions and limitations under the License.
         size: 4
     };
 
-    AWS.config.region = 'us-east-1';
+    // AWS.config.region = 'us-east-1';
     console.log('Region: ' + AWS.config.region);
 
     // Initialize S3 SDK and the moment library (for time formatting utilities)
@@ -619,17 +619,23 @@ permissions and limitations under the License.
 
             // If the user has clicked on a folder then navigate into that folder
             if (target.dataset.s3 === "folder") {
-                resetDepth();
-                delete s3exp_config.ContinuationToken;
-                s3exp_config.Prefix = target.dataset.prefix;
-                s3exp_config.Delimiter = $("input[name='optionsdepth']:checked").val() == "folder" ? "/" : "";
-                (s3exp_lister = s3list(s3exp_config, s3draw)).go();
+                window.location.hash = target.dataset.prefix
                 // Else user has clicked on an object so download it in new window/tab
             } else {
                 window.open(target.href, '_blank');
             }
             return false;
         });
+
+        $(window).on("popstate", function (e) {
+            resetDepth()
+            delete s3exp_config.ContinuationToken
+      
+            var hash = window.location.hash
+            s3exp_config.Prefix = hash !== "" ? hash.slice(1) : "" // remove #
+            s3exp_config.Delimiter = $("input[name='optionsdepth']:checked").val() == "folder" ? "/" : ""
+            ;(s3exp_lister = s3list(s3exp_config, s3draw)).go()
+        })
 
         // Document URL typically looks like this for path-style URLs:
         // - https://s3.amazonaws.com/mybucket1/index.html
