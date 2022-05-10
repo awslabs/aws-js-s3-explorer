@@ -160,8 +160,8 @@ permissions and limitations under the License.
 <script type="text/javascript">
     var HIDE_INDEX = true;
     var s3exp_config = {
-        Region: 'ap-northeast-1',
-        Bucket: 'api-infra-bucket',
+        Region: '',
+        Bucket: '',
         Prefix: '',
         Delimiter: '/'
     };
@@ -173,7 +173,7 @@ permissions and limitations under the License.
         size: 4
     };
 
-    // AWS.config.region = 'us-east-1';
+    AWS.config.region = 'us-east-1';
     console.log('Region: ' + AWS.config.region);
 
     // Initialize S3 SDK and the moment library (for time formatting utilities)
