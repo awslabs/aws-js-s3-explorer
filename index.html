@@ -335,12 +335,7 @@ permissions and limitations under the License.
                         a2.click(function(e) {
                             e.preventDefault();
                             console.log('Breadcrumb click object prefix: ' + saveprefix);
-                            s3exp_config = {
-                                Bucket: data.params.Bucket,
-                                Prefix: saveprefix,
-                                Delimiter: data.params.Delimiter
-                            };
-                            (s3exp_lister = s3list(s3exp_config, s3draw)).go();
+                            window.location.hash = saveprefix;
                         });
                     })();
                 }
