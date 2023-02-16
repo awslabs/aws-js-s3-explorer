@@ -121,10 +121,11 @@ permissions and limitations under the License.
                                         <input type="radio" name="optionsdepth" value="bucket" id="optionbucket">&nbsp;Bucket
                                     </label>
                                 </div>
-                                <!-- Bucket selection -->
+                                <!-- Bucket selection (block user from switching it)
                                 <div class="btn-group" id="bucket">
                                     <i id="bucket-chooser" style="cursor: pointer;" class="btn fa fa-cog fa-2x" title="Switch to a different S3 Bucket"></i>
                                 </div>
+                                -->
                                 <!-- Dual purpose: progress spinner and refresh button, plus object count -->
                                 <div class="btn-group" id="refresh">
                                     <span id="bucket-loader" style="cursor: pointer;" class="btn fa fa-refresh fa-2x pull-left" title="Refresh"></span>
@@ -168,15 +169,16 @@ permissions and limitations under the License.
 <script src="//code.jquery.com/ui/1.12.1/jquery-ui.min.js" integrity="sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU=" crossorigin="anonymous"></script>
 <script src="aodn.js"></script>
 <script type="text/javascript">
-    var HIDE_INDEX = true;
-    var s3exp_config = {
+    let params = getParams(window.location.href);
+    let HIDE_INDEX = true;
+    let s3exp_config = {
         Region: 'ap-southeast-2',
-        Bucket: 'imos-data',
-        Prefix: '',
+        Bucket: 'imos-test-data',
+        Prefix: params['p'] === null ? '' : params['p'],
         Delimiter: '/'
     };
-    var s3exp_lister = null;
-    var s3exp_columns = {
+    let s3exp_lister = null;
+    let s3exp_columns = {
         key: 1,
         folder: 2,
         date: 3,
