@@ -2,6 +2,9 @@
 
 > Noted: This is a fork from the orginal S3 explorer because we need to customize it.
 > If there are updates in the orginal S3 explorer, we can merge those changes here.
+> 
+> You can test this index-html by putting it into imos-data-test and then change the bucket
+> in the UI
 
 Note: if you are looking for the newer, read-write version of this tool that supports non-public S3 buckets then please visit the [S3 Explorer (v2 alpha)](https://github.com/awslabs/aws-js-s3-explorer/tree/v2-alpha) page.
 
