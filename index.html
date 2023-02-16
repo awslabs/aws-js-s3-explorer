@@ -173,7 +173,7 @@ permissions and limitations under the License.
     let HIDE_INDEX = true;
     let s3exp_config = {
         Region: 'ap-southeast-2',
-        Bucket: 'imos-test-data',
+        Bucket: 'imos-data',        // This must match the s3 bucket name that the html locates
         Prefix: params['p'] === null ? '' : params['p'],
         Delimiter: '/'
     };
@@ -182,7 +182,8 @@ permissions and limitations under the License.
         key: 1,
         folder: 2,
         date: 3,
-        size: 4
+        size: 4,
+        icons: 5
     };
 
     AWS.config.region = 'ap-southeast-2';
