@@ -19,14 +19,16 @@ permissions and limitations under the License.
 <html lang="en">
 
 <head>
-    <title>AWS S3 Explorer</title>
+    <title>AODN Data Bucket</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="shortcut icon" href="https://aws.amazon.com/favicon.ico">
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css" integrity="sha384-PmY9l28YgO4JwMKbTvgaS7XNZJ30MK9FAZjjzXtlqyZCqBY6X6bXIkM++IkyinN+" crossorigin="anonymous">
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap-theme.min.css" integrity="sha384-jzngWsPS6op3fgRCDTESqrEJwRKck+CILhJVO5VvaAZCq8JYf8HsR/HPpBOOPZfR" crossorigin="anonymous">
-    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.12.0/css/all.css">
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.10.19/css/dataTables.bootstrap.min.css">
+    <link rel="shortcut icon" href="//aws.amazon.com/favicon.ico">
+    <link rel="stylesheet" href="//stackpath.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css" integrity="sha384-PmY9l28YgO4JwMKbTvgaS7XNZJ30MK9FAZjjzXtlqyZCqBY6X6bXIkM++IkyinN+" crossorigin="anonymous">
+    <link rel="stylesheet" href="//stackpath.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap-theme.min.css" integrity="sha384-jzngWsPS6op3fgRCDTESqrEJwRKck+CILhJVO5VvaAZCq8JYf8HsR/HPpBOOPZfR" crossorigin="anonymous">
+    <link rel="stylesheet" href="//use.fontawesome.com/releases/v5.12.0/css/all.css">
+    <link rel="stylesheet" href="//cdn.datatables.net/1.10.19/css/dataTables.bootstrap.min.css">
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
     <style type="text/css">
         #wrapper {
             padding-left: 0;
@@ -71,6 +73,12 @@ permissions and limitations under the License.
 <!-- <style media="screen" type="text/css"> * { outline: 1px red solid; } </style> -->
 
 <body>
+    <div id="link-copy-success" style="display:none">
+        Link copy success
+    </div>
+    <div id="link-copy-fail" style="display:none">
+        Link copy fail
+    </div>
     <div id="page-wrapper">
         <div class="row">
             <div class="col-lg-12">
@@ -136,6 +144,7 @@ permissions and limitations under the License.
                                     <th>Last Modified</th>
                                     <th>Timestamp</th>
                                     <th>Size</th>
+                                    <th>&nbsp;</th>
                                 </tr>
                             </thead>
                             <tbody id="tbody-s3objects"></tbody>
@@ -149,19 +158,20 @@ permissions and limitations under the License.
 
 </html>
 
-<script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
-<script src="https://stackpath.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js" integrity="sha384-vhJnz1OVIdLktyixHY4Uk3OHEwdQqPppqYR8+5mjsauETgLOcEynD9oPHhhz18Nw" crossorigin="anonymous"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/bootbox.js/4.4.0/bootbox.min.js"></script>
-<script src="https://sdk.amazonaws.com/js/aws-sdk-2.207.0.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.0/moment.min.js"></script>
-<script src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/1.10.19/js/dataTables.bootstrap.min.js"></script>
-
+<script src="//code.jquery.com/jquery-3.4.1.min.js"></script>
+<script src="//stackpath.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js" integrity="sha384-vhJnz1OVIdLktyixHY4Uk3OHEwdQqPppqYR8+5mjsauETgLOcEynD9oPHhhz18Nw" crossorigin="anonymous"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/bootbox.js/4.4.0/bootbox.min.js"></script>
+<script src="//sdk.amazonaws.com/js/aws-sdk-2.207.0.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.0/moment.min.js"></script>
+<script src="//cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
+<script src="//cdn.datatables.net/1.10.19/js/dataTables.bootstrap.min.js"></script>
+<script src="//code.jquery.com/ui/1.12.1/jquery-ui.min.js" integrity="sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU=" crossorigin="anonymous"></script>
+<script src="aodn.js"></script>
 <script type="text/javascript">
     var HIDE_INDEX = true;
     var s3exp_config = {
-        Region: '',
-        Bucket: '',
+        Region: 'ap-southeast-2',
+        Bucket: 'imos-data',
         Prefix: '',
         Delimiter: '/'
     };
@@ -173,7 +183,7 @@ permissions and limitations under the License.
         size: 4
     };
 
-    AWS.config.region = 'us-east-1';
+    AWS.config.region = 'ap-southeast-2';
     console.log('Region: ' + AWS.config.region);
 
     // Initialize S3 SDK and the moment library (for time formatting utilities)
@@ -207,7 +217,7 @@ permissions and limitations under the License.
         if (AWS.config.region === "us-east-1") {
             return document.location.protocol + '//' + bucket + '.s3.amazonaws.com/' + enckey;
         } else {
-            return document.location.protocol + '//' + bucket + '.s3-' + AWS.config.region + '.amazonaws.com/' + enckey;
+            return document.location.origin + '/' + enckey;
         }
     }
 
@@ -217,7 +227,7 @@ permissions and limitations under the License.
         if (AWS.config.region === "us-east-1") {
             return document.location.protocol + "//s3.amazonaws.com/" + bucket + "/" + enckey;
         } else {
-            return document.location.protocol + "//s3-' + AWS.config.region + '.amazonaws.com/" + bucket + "/" + enckey;
+            return document.location.origin + '/' + bucket + '/' + enckey;
         }
     }
 
@@ -583,7 +593,12 @@ permissions and limitations under the License.
                 "mData": function(source, type, val) {
                     return source.Size ? ((type == 'display') ? bytesToSize(source.Size) : source.Size) : "";
                 }
-            }, ]
+            }, {
+              targets: 5,
+              orderable: false,
+              data: "Key",
+              render: (data, type, full) => displayIcon(data, type, full)
+            }]
         });
 
         $('#tb-s3objects').DataTable().column(s3exp_columns.key).visible(false);
