@@ -617,10 +617,13 @@ permissions and limitations under the License.
             return ((x < y) ? 1 : ((x > y) ? -1 : 0));
         };
 
-        // Allow user to hide folders and default hide error.html and robots.txt
+        // Allow user to hide folders and default hide error.html and robots.txt and js file
         $.fn.dataTableExt.afnFiltering.push(function(oSettings, aData, iDataIndex) {
             console.log("hide folders");
-            return ($('#hidefolders').is(':checked') ? !isfolder(aData[0]) : true) && aData[0] !== 'error.html' && aData[0] !== 'robots.txt';
+            return ($('#hidefolders').is(':checked') ? !isfolder(aData[0]) : true)
+              && aData[0] !== 'error.html'
+              && aData[0] !== 'robots.txt'
+              && !aData[0].endsWith(".js");
         });
 
         // Delegated event handler for S3 object/folder clicks. This is delegated
