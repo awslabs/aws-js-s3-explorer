@@ -173,7 +173,7 @@ permissions and limitations under the License.
     let HIDE_INDEX = true;
     let s3exp_config = {
         Region: 'ap-southeast-2',
-        Bucket: 'imos-data',        // This must match the s3 bucket name that the html locates
+        Bucket: getS3BucketByUrl(window.location.hostname),        // This must match the s3 bucket name that the html locates
         Prefix: params['p'] === null ? '' : params['p'],
         Delimiter: '/'
     };

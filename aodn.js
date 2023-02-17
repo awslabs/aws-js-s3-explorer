@@ -1,4 +1,29 @@
 // Add on functions to customize the s3 explorer
+
+/**
+ *
+ */
+const getS3BucketByUrl = (url) => {
+  const mapping = {
+    "data.aodn.org.au": "imos-data",
+    "imos-data.prod.aodn.org.au": "imos-data",
+    "imos-data.aodn.org.au": "imos-data",
+    "data-test.aodn.org.au": "imos-test-data",
+    "imos-test-data.prod.aodn.org.au": "imos-test-data",
+    "imos-test-data.aodn.org.au": "imos-test-data",
+    "binary.aodn.org.au": "imos-binary",
+    "binary.prod.aodn.org.au": "imos-binary",
+    "content.aodn.org.au": "content.aodn.org.au",
+    "localhost": "imos-test-data"
+  };
+
+  return mapping[url];
+}
+/**
+ * Get the param in the url
+ * @param url
+ * @returns {{}}
+ */
 const getParams = (url) => {
 
   let queryString = url.substring(url.indexOf('?') + 1);
