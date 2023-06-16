@@ -180,5 +180,5 @@ This application allows visitors to view the contents of a bucket via its folder
 
 ## CloudFront support
 
-You can now run this application with a CloudFront distribution in front of your S3 bucket.  To enable CloudFront support, the application requires a public file called "s3_id.txt" to be in the root of the folder.  The value of the file must be the full S3 bucketname, such as: "foobucket.s3.amazonaws.com".
+You can now run this application with a CloudFront distribution in front of your S3 bucket.  To enable CloudFront support, the application requires a public file called "s3_id.txt" to be in the root of the bucket.  The value of the file must be the full S3 bucketname, such as: "foobucket.s3.amazonaws.com".
 
