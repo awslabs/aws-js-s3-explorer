@@ -718,7 +718,7 @@ permissions and limitations under the License.
         // launched directly from within a bucket), else prompt the user.
         if (s3exp_config.Bucket) {
             (s3exp_lister = s3list(s3exp_config, s3draw)).go();
-} else if (parser.hostname.endsWith('cloudfront.net') && s3_location) {
+        } else if (parser.hostname.endsWith('cloudfront.net') && s3_location) {
             var s3_url;
             var bucket;
             var region;
