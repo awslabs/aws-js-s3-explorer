@@ -177,3 +177,8 @@ Note the dash (-) between s3-website and the region identifier. Which form is us
 ## Display Options
 
 This application allows visitors to view the contents of a bucket via its folders or by listing out all objects in a bucket. The default view is by folder, but users can click on &ldquo;Bucket&rdquo; toward the top-right of the page to display all objects in the bucket. Note clicking on &ldquo;Bucket&rdquo; will load all objects in the bucket into the browser. If your bucket contains many objects, this could overwhelm the browser. We&rsquo;ve successfully tested this application on a bucket with over 30,000 objects, but keep in mind that trying to load too many objects in a browser could lead to a poor user experience.
+
+## CloudFront support
+
+You can now run this application with a CloudFront distribution in front of your S3 bucket.  To enable CloudFront support, the application requires a public file called "s3_id.txt" to be in the root of the folder.  The value of the file must be the full S3 bucketname, such as: "foobucket.s3.amazonaws.com".
+
