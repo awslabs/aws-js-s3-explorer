@@ -159,9 +159,12 @@ permissions and limitations under the License.
 
 <script type="text/javascript">
     var HIDE_INDEX = true;
+    // CloudFront Support
+    var HIDE_S3_ID = true;
     var s3exp_config = {
         Region: '',
         Bucket: '',
+        CloudFront: '',        
         Prefix: '',
         Delimiter: '/'
     };
@@ -179,6 +182,9 @@ permissions and limitations under the License.
     // Initialize S3 SDK and the moment library (for time formatting utilities)
     var s3 = new AWS.S3();
     moment().format();
+
+    // CloudFront Support - Init CF SDK
+    var cloudfront = new AWS.CloudFront();
 
     function bytesToSize(bytes) {
         var sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
@@ -203,12 +209,19 @@ permissions and limitations under the License.
 
     function object2hrefvirt(bucket, key) {
         var enckey = key.split('/').map(function(x) { return encodeURIComponent(x); }).join('/');
+        var strBucket = ""
 
-        if (AWS.config.region === "us-east-1") {
-            return document.location.protocol + '//' + bucket + '.s3.amazonaws.com/' + enckey;
+        // CloudFront Support
+        if (s3exp_config.CloudFront){
+            strBucket = '.cloudfront.net/'
         } else {
-            return document.location.protocol + '//' + bucket + '.s3-' + AWS.config.region + '.amazonaws.com/' + enckey;
+            if (AWS.config.region === "us-east-1") {
+                strBucket = '.s3.amazonaws.com/';
+            } else {
+                strBucket = '.s3-' + AWS.config.region + '.amazonaws.com/'
+            }
         }
+        return document.location.protocol + '//' + bucket + strBucket + enckey;
     }
 
     function object2hrefpath(bucket, key) {
@@ -418,6 +431,14 @@ permissions and limitations under the License.
                         });
                     }
 
+                    // Optionally, filter the s3_id file out of the listed S3 objects
+                    if (HIDE_S3_ID) {
+                        console.log("Filter: remove s3_id.txt");
+                        data.Contents = data.Contents.filter(function(el) {
+                            return el.Key !== "s3_id.txt";
+                        });
+                    }
+
                     // Accumulate the S3 objects and common prefixes
                     scope.Contents.push.apply(scope.Contents, data.Contents);
                     scope.CommonPrefixes.push.apply(scope.CommonPrefixes, data.CommonPrefixes);
@@ -483,6 +504,24 @@ permissions and limitations under the License.
     $(document).ready(function() {
         console.log('ready');
 
+        var s3_location;
+
+        // CloudFront Support: get the name of the S3 bucket for this CF distribution
+        $.ajax({
+            url : "/s3_id.txt",
+            type : "get",
+            async: false,
+            success : function(result) {
+                console.log(result);
+                s3_location = result;
+            },
+            error: function() {
+                console.log("No CloudFront data found");
+            }
+         });
+        if (s3_location) { console.log(s3_location);};
+
+
         // Click handler for refresh button (to invoke manual refresh)
         $('#bucket-loader').click(function(e) {
             if ($('#bucket-loader').hasClass('fa-spin')) {
@@ -538,7 +577,11 @@ permissions and limitations under the License.
                 return '<a data-s3="folder" data-prefix="' + htmlEscape(data) + '" href="' + object2hrefvirt(s3exp_config.Bucket, data) + '">' + prefix2folder(data) + '</a>';
             } else {
                 console.log("not folder/this document: " + data);
-                return '<a data-s3="object" href="' + object2hrefvirt(s3exp_config.Bucket, data) + '"download="' + fullpath2filename(data) + '">' + fullpath2filename(data) + '</a>';
+                if (s3exp_config.CloudFront) {
+                    return '<a data-s3="object" href="' + object2hrefvirt(s3exp_config.CloudFront, data) + '"download="' + fullpath2filename(data) + '">' + fullpath2filename(data) + '</a>';    
+                } else {
+                    return '<a data-s3="object" href="' + object2hrefvirt(s3exp_config.Bucket, data) + '"download="' + fullpath2filename(data) + '">' + fullpath2filename(data) + '</a>';
+                }
             }
         }
 
@@ -675,6 +718,75 @@ permissions and limitations under the License.
         // launched directly from within a bucket), else prompt the user.
         if (s3exp_config.Bucket) {
             (s3exp_lister = s3list(s3exp_config, s3draw)).go();
+        } else if (parser.hostname.endsWith('cloudfront.net') && s3_location) {
+            var s3_url;
+            var bucket;
+            var region;
+            var s3_id;
+            var cf_hostnames = parser.hostname.split('.');
+
+            // CloudFront Support:
+            console.log("CloudFront detected")
+
+            cf_id = cf_hostnames[0];
+            console.log("CF ID=" + cf_id);
+            console.log("S3 Location: " + s3_location);
+            s3_url = s3_location.valueOf();
+            console.log("S3 URL:" + s3_url);
+
+            const cf_s3_hostnames = s3_url.split(".");
+            const cf_s3_pathnames = s3_url.split("/");
+
+            console.log("count of words in hostname=" + cf_s3_hostnames.length);
+            console.log("count of words in pathname=" + cf_s3_pathnames.length);
+
+            console.log("hostnames=" + cf_s3_hostnames);
+            console.log("pathnames=" + cf_s3_pathnames);
+
+            // If bucket prefix not included in hostname
+            if (cf_s3_hostnames[0].match(/^s3-/) || cf_s3_hostnames[0].match(/^s3$/)) {
+                bucket = cf_s3_pathnames[1];
+                region = cf_s3_hostnames[0];
+                console.log("path bucket=" + bucket);
+                console.log("path region=" + region);
+            } else {
+                bucket = cf_s3_hostnames[0];
+                region = cf_s3_hostnames[cf_s3_hostnames.length - 3];
+                console.log("host bucket=" + bucket);
+                console.log("host region=" + region);
+            }
+
+            // If we found statically-hosted website prefix or explicit region, for
+            // example s3-us-west-2, then get region else use the default of US Standard
+            if (region !== 's3') {
+                if (region.startsWith('s3-website-')) {
+                    AWS.config.region = region.substring(11);
+                } else if (region.startsWith('s3-') || region.startsWith('s3.')) {
+                    AWS.config.region = region.substring(3);
+                } else {
+                    AWS.config.region = region;
+                }
+            }
+
+            console.log("AWS region=" + AWS.config.region);
+            console.log("S3 bucket=" + bucket);
+
+            // Create and initialize S3 object
+            s3 = new AWS.S3();
+            s3exp_config = {
+                Bucket: bucket,
+                CloudFront: cf_id,
+                Delimiter: '/'
+            };
+
+            if (window.location.hash) {
+                console.log("Location hash=" + window.location.hash);
+                s3exp_config.Prefix = window.location.hash.substring(1);
+            }
+
+            // Do initial bucket list
+            (s3exp_lister = s3list(s3exp_config, s3draw)).go();
+
         } else if (parser.hostname.endsWith('amazonaws.com')) {
             // Hostname is likely to be in one of the following forms:
             // - s3.amazonaws.com
