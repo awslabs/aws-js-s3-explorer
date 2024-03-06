@@ -486,7 +486,7 @@ permissions and limitations under the License.
             if (result !== null) {
                 resetDepth();
                 s3exp_config = {
-                    Bucket: result,
+                    Bucket: htmlEscape(result),
                     Delimiter: '/'
                 };
                 (s3exp_lister = s3list(s3exp_config, s3draw)).go();
