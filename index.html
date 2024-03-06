@@ -23,10 +23,10 @@ permissions and limitations under the License.
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="shortcut icon" href="https://aws.amazon.com/favicon.ico">
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css" integrity="sha384-PmY9l28YgO4JwMKbTvgaS7XNZJ30MK9FAZjjzXtlqyZCqBY6X6bXIkM++IkyinN+" crossorigin="anonymous">
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap-theme.min.css" integrity="sha384-jzngWsPS6op3fgRCDTESqrEJwRKck+CILhJVO5VvaAZCq8JYf8HsR/HPpBOOPZfR" crossorigin="anonymous">
-    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.12.0/css/all.css">
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.10.19/css/dataTables.bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/css/bootstrap.min.css" integrity="sha384-HSMxcRTRxnN+Bdg0JdbxYKrThecOKuH5zCYotlSAcp1+c8xmyTe9GYg1l9a69psu" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/css/bootstrap-theme.min.css" integrity="sha384-6pzBo3FDv/PJ8r2KRkGHifhEocL+1X2rVCTTkUfGk7/0pbek5mMa1upzvWbrUbOZ" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/2.0.1/css/dataTables.bootstrap.min.css" integrity="sha512-VMR2J9d1Y/nEZh/4y/hpeGiyRmNpQFSFUgP9gqY3/2kLf3hFUdmdgkwfzazE3HllT7wa+pSH78lr4guyJXN9zQ==" crossorigin="anonymous">
     <style type="text/css">
         #wrapper {
             padding-left: 0;
@@ -149,13 +149,13 @@ permissions and limitations under the License.
 
 </html>
 
-<script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
-<script src="https://stackpath.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js" integrity="sha384-vhJnz1OVIdLktyixHY4Uk3OHEwdQqPppqYR8+5mjsauETgLOcEynD9oPHhhz18Nw" crossorigin="anonymous"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/bootbox.js/4.4.0/bootbox.min.js"></script>
-<script src="https://sdk.amazonaws.com/js/aws-sdk-2.207.0.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.0/moment.min.js"></script>
-<script src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/1.10.19/js/dataTables.bootstrap.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g==" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/js/bootstrap.min.js" integrity="sha384-aJ21OjlMXNL5UyIl/XNwTMqvzeRMZH2w8c5cRVpzpU8Y5bApTppSuUkhZXN0VxHd" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootbox.js/5.5.2/bootbox.min.js" integrity="sha512-RdSPYh1WA6BF0RhpisYJVYkOyTzK4HwofJ3Q7ivt/jkpW6Vc8AurL1R+4AUcvn9IwEKAPm/fk7qFZW3OuiUDeg==" crossorigin="anonymous"></script>
+<script src="https://sdk.amazonaws.com/js/aws-sdk-2.1571.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.30.0/moment.min.js" integrity="sha512-Zld6cksVzVRF8ZJIbU4Or5vo47P1/Wg3U/c15iMudpFIExUKZlyHPB+i7+Wov3jfRMBECsn/MgqBPpfAJANHXw==" crossorigin="anonymous"></script>
+<script src="https://cdn.datatables.net/2.0.1/js/dataTables.min.js" integrity="sha512-PhxKYD+yO/lC78X6FH4UvD00aTR7qMJm3DuoHDBPd1vtTcsJuIqbQCZ7SPa8BL0Wss4C/Vq98Rp58G9O/yWm4g==" crossorigin="anonymous"></script>
+<script src="https://cdn.datatables.net/2.0.1/js/dataTables.bootstrap.min.js" integrity="sha512-VA6ybNLYE2gJREhDvihaesx+djpqYnqOIq8eOVEZPF/lb/Ylur3kIHp46mOVBcyEn6gMPPDGNREsmEnviczMlg==" crossorigin="anonymous"></script>
 
 <script type="text/javascript">
     var HIDE_INDEX = true;
@@ -164,7 +164,7 @@ permissions and limitations under the License.
     var s3exp_config = {
         Region: '',
         Bucket: '',
-        CloudFront: '',        
+        CloudFront: '',
         Prefix: '',
         Delimiter: '/'
     };
@@ -578,7 +578,7 @@ permissions and limitations under the License.
             } else {
                 console.log("not folder/this document: " + data);
                 if (s3exp_config.CloudFront) {
-                    return '<a data-s3="object" href="' + object2hrefvirt(s3exp_config.CloudFront, data) + '"download="' + fullpath2filename(data) + '">' + fullpath2filename(data) + '</a>';    
+                    return '<a data-s3="object" href="' + object2hrefvirt(s3exp_config.CloudFront, data) + '"download="' + fullpath2filename(data) + '">' + fullpath2filename(data) + '</a>';
                 } else {
                     return '<a data-s3="object" href="' + object2hrefvirt(s3exp_config.Bucket, data) + '"download="' + fullpath2filename(data) + '">' + fullpath2filename(data) + '</a>';
                 }
