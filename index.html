@@ -485,6 +485,7 @@ Please see the project <a target="_blank" href="https://github.com/awslabs/aws-j
                                 <div class="btn-group">
                                     <span id="bucket-plus" style="cursor: pointer;" class="btn fa fa-folder-plus fa-2x" ng-hide="!view.settings" title="New folder" data-target="#AddFolderModal" data-toggle="modal"></span>
                                     <span id="bucket-upload" style="cursor: pointer;" class="btn fa fa-cloud-upload-alt fa-2x" ng-hide="!view.settings" ng-click="upload()" title="Upload files"></span>
+                                    <span id="bucket-download" style="cursor: pointer;" class="btn fa fa-cloud-download-alt fa-2x" title="Download" ng-hide="!view.settings || !view.keys_selected.length" ng-disabled="!view.keys_selected.length"></span>
                                     <span id="bucket-trash" style="cursor: pointer;" class="btn fa fa-trash-alt fa-2x" title="Delete {{view.keys_selected.length}} selected object(s)" ng-hide="!view.settings || !view.keys_selected.length" ng-disabled="!view.keys_selected.length" ng-click="trash()"></span>
                                     <span id="bucket-info" style="cursor: pointer;" class="btn fa fa-info-circle fa-2x" title="Info" data-target="#InfoModal" data-toggle="modal"></span>
                                     <span id="bucket-loader" style="cursor: pointer;" class="btn fa fa-sync fa-2x" ng-hide="!view.settings" ng-click="refresh()" title="Refresh"></span>
@@ -532,6 +533,8 @@ Please see the project <a target="_blank" href="https://github.com/awslabs/aws-j
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js" integrity="sha384-vhJnz1OVIdLktyixHY4Uk3OHEwdQqPppqYR8+5mjsauETgLOcEynD9oPHhhz18Nw" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.7.5/angular.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootbox.js/4.4.0/bootbox.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.3.0/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/1.3.8/FileSaver.min.js"></script>
 <script src="https://sdk.amazonaws.com/js/aws-sdk-2.437.0.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.0/moment.min.js"></script>
 <script src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
