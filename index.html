@@ -19,7 +19,7 @@ permissions and limitations under the License.
 <html lang="en">
 
 <head>
-    <title>AWS S3 Explorer</title>
+    <title id="pageTitle">AWS S3 Explorer</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="shortcut icon" href="https://aws.amazon.com/favicon.ico">
@@ -82,13 +82,13 @@ permissions and limitations under the License.
                         <div class="btn-group pull-left">
                             <!-- App title -->
                             <div class="title pull-left">
-                                AWS S3 Explorer&nbsp;
+                                <span id="headerTitle">AWS S3 Explorer</span>&nbsp;
                             </div>
                             <!-- Bucket breadcrumbs -->
                             <div class="pull-right">
                                 <ul id="breadcrumb" class="breadcrumb pull-right">
                                     <li class="active">
-                                        <a href="#">&lt;bucket&gt;</a>
+                                        <a href="#">&lt;<span id="bucket">bucket</span>&gt;</a>
                                     </li>
                                 </ul>
                             </div>
@@ -99,24 +99,36 @@ permissions and limitations under the License.
                                 <!-- Hide folders checkbox -->
                                 <div class="btn-group">
                                     <label class="btn">
-                                        <input type="checkbox" id="hidefolders">&nbsp;Hide folders?
+                                        <input type="checkbox" id="hidefolders">&nbsp;
+                                            <span id="hide-folders-text">Hide folders?</span>
                                     </label>
                                 </div>
                                 <!-- Folder/Bucket radio group -->
                                 <div class="btn-group" data-toggle="buttons">
-                                    <label class="btn btn-primary active" title="View all objects in folder">
+                                    <label class="btn btn-primary active" id="folder-objects" title="View all objects in folder">
                                         <i class="fa fa-angle-double-up"></i>
-                                        <input type="radio" name="optionsdepth" value="folder" id="optionfolder" checked>&nbsp;Folder
+                                        <input type="radio" name="optionsdepth" value="folder" id="optionfolder" checked>&nbsp;<span id="folder-text">Folder</span>
                                     </label>
-                                    <label class="btn btn-primary" title="View all objects in bucket">
+                                    <label class="btn btn-primary" id="bucket-objects" title="View all objects in bucket">
                                         <i class="fa fa-angle-double-down"></i>
-                                        <input type="radio" name="optionsdepth" value="bucket" id="optionbucket">&nbsp;Bucket
+                                        <input type="radio" name="optionsdepth" value="bucket" id="optionbucket">&nbsp;<span id="bucket-text">Bucket</span>
                                     </label>
                                 </div>
                                 <!-- Bucket selection -->
                                 <div class="btn-group" id="bucket">
                                     <i id="bucket-chooser" style="cursor: pointer;" class="btn fa fa-cog fa-2x" title="Switch to a different S3 Bucket"></i>
                                 </div>
+                                <!-- Language selection-->
+                                <div class="btn-group" id="language">
+                                    <select
+                                      class="form-control"
+                                      id="languageSelect"
+                                      style="width: auto; margin: 5px"
+                                    >
+                                      <option value="en">English</option>
+                                      <option value="fr">Français</option>
+                                    </select>
+                                  </div>
                                 <!-- Dual purpose: progress spinner and refresh button, plus object count -->
                                 <div class="btn-group" id="refresh">
                                     <span id="bucket-loader" style="cursor: pointer;" class="btn fa fa-refresh fa-2x pull-left" title="Refresh"></span>
@@ -131,11 +143,11 @@ permissions and limitations under the License.
                         <table class="table table-bordered table-hover table-striped" id="tb-s3objects">
                             <thead>
                                 <tr>
-                                    <th>Object</th>
-                                    <th>Folder</th>
-                                    <th>Last Modified</th>
-                                    <th>Timestamp</th>
-                                    <th>Size</th>
+                                    <th id="col-object">Object</th>
+                                    <th id="col-folder">Folder</th>
+                                    <th id="col-last-modified">Last Modified</th>
+                                    <th id="col-timestamp">Timestamp</th>
+                                    <th id="col-size">Size</th>
                                 </tr>
                             </thead>
                             <tbody id="tbody-s3objects"></tbody>
@@ -404,7 +416,7 @@ permissions and limitations under the License.
                     console.log('Error: ' + err.stack);
                     scope.stop = true;
                     $('#bucket-loader').removeClass('fa-spin');
-                    bootbox.alert("Error accessing S3 bucket " + scope.params.Bucket + ". Error: " + err);
+                    bootbox.alert({message: translations['bucketError'][currentLang] + scope.params.Bucket +'. Error: ' + err,});
                 } else {
                     // console.log('Data: ' + JSON.stringify(data));
                     console.log("Options: " + $("input[name='optionsdepth']:checked").val());
@@ -482,17 +494,25 @@ permissions and limitations under the License.
     }
 
     function promptForBucketInput() {
-        bootbox.prompt("Please enter the S3 bucket name", function(result) {
-            if (result !== null) {
-                resetDepth();
-                s3exp_config = {
-                    Bucket: htmlEscape(result),
-                    Delimiter: '/'
-                };
-                (s3exp_lister = s3list(s3exp_config, s3draw)).go();
-            }
-        });
-    }
+    bootbox.prompt({
+      title: translations['enterBucketName'][currentLang],
+      buttons: {
+        cancel: {
+          label: translations['buttonCancel'][currentLang],
+        },
+      },
+      callback: function (result) {
+        if (result !== null) {
+          resetDepth();
+          s3exp_config = {
+            Bucket: htmlEscape(result),
+            Delimiter: '/'
+          };
+          (s3exp_lister = s3list(s3exp_config, s3draw)).go();
+        }
+      }
+    });
+  }
 
     function resetDepth() {
         $('#tb-s3objects').DataTable().column(1).visible(false);
@@ -541,6 +561,7 @@ permissions and limitations under the License.
 
         $('#hidefolders').click(function(e) {
             $('#tb-s3objects').DataTable().draw();
+            translateTable(currentLang);
         });
 
         // Folder/Bucket radio button handler
@@ -858,4 +879,193 @@ permissions and limitations under the License.
             promptForBucketInput();
         }
     });
+
+  // Translation dictionary
+  var currentLang = 'en';
+  const translations = {
+    'hide-folders-text': {
+      en: 'Hide folders?',
+      fr: 'Masquer les dossiers?',
+    },
+    'folder-text': {
+      en: 'Folder',
+      fr: 'Dossier',
+    },
+    'bucket-text': {
+      en: 'Bucket',
+      fr: 'Compartiment',
+    },
+    'col-object': {
+      en: 'Object',
+      fr: 'Objet',
+    },
+    'col-folder': {
+      en: 'Folder',
+      fr: 'Dossier',
+    },
+    'col-last-modified': {
+      en: 'Last Modified',
+      fr: 'Dernière modification',
+    },
+    'col-timestamp': {
+      en: 'Timestamp',
+      fr: 'Horodatage',
+    },
+    'col-size': {
+      en: 'Size',
+      fr: 'Taille',
+    },
+    pageTitle: {
+      en: 'AWS S3 Explorer',
+      fr: 'Explorateur S3 AWS',
+    },
+    headerTitle: {
+      en: 'AWS S3 Explorer',
+      fr: 'Explorateur S3 AWS',
+    },
+    bucket: {
+      en: 'bucket',
+      fr: 'compartiment',
+    },
+    tableEntires: {
+      en: 'entries per page',
+      fr: 'entrées par page',
+    },
+    tableSearch: {
+      en: 'Search:',
+      fr: 'Rechercher:',
+    },
+    tablePages: {
+      en: 'Showing {start} to {end} of {total} entries',
+      fr: 'Affichage {start} à {end} de {total} entrées',
+    },
+    tablePrevious: {
+      en: 'Previous',
+      fr: 'Précédent',
+    },
+    tableNext: {
+      en: 'Next',
+      fr: 'Suivant',
+    },
+    tableEmpty: {
+      en: 'No data available in table',
+      fr: 'Aucune donnée disponible dans le tableau',
+    },
+    titleBucketChooser: {
+      en: 'Switch to a different S3 Bucket',
+      fr: 'Passer à un autre compartiment S3',
+    },
+    titleRefresh: {
+      en: 'Refresh',
+      fr: 'Actualiser',
+    },
+    titleCount: {
+      en: 'Object count',
+      fr: "Nombre d'objets",
+    },
+    folderObjects: {
+      en: 'View all objects in folder',
+      fr: 'Afficher tous les objets du dossier',
+    },
+    bucketObjects: {
+      en: 'View all objects in bucket',
+      fr: 'Afficher tous les objets du compartiment',
+    },
+    enterBucketName: {
+      en: 'Please enter the S3 bucket name',
+      fr: 'Veuillez entrer le nom du compartiment S3',
+    },
+    bucketError: {
+      en: 'Error accessing S3 bucket',
+      fr: "Erreur lors de l'accès au compartiment S3",
+    },
+    buttonOk: {
+      en: 'Ok',
+      fr: 'Ok',
+    },
+    buttonCancel: {
+      en: 'Cancel',
+      fr: 'Annuler',
+    },
+  };
+
+  // Event listener for language change
+  document
+    .getElementById('languageSelect')
+    .addEventListener('change', function () {
+      changeLanguage(this.value);
+    });
+
+  // Function to change language
+  function changeLanguage(lang) {
+    currentLang = lang;
+    //Translate all elements that have id
+    for (const [elementId, texts] of Object.entries(translations)) {
+      const element = document.getElementById(elementId);
+      if (element && texts[lang]) {
+        element.textContent = texts[lang];
+      }
+    }
+
+    //Translate title attributes:
+    const titleBucketChooser = document.getElementById('bucket-chooser');
+    if (titleBucketChooser) {
+      titleBucketChooser.title = translations['titleBucketChooser'][lang];
+    }
+    const titleRefresh = document.getElementById('bucket-loader');
+    if (titleRefresh) {
+      titleRefresh.title = translations['titleRefresh'][lang];
+    }
+    const titleCount = document.getElementById('badgecount');
+    if (titleCount) {
+      titleCount.title = translations['titleCount'][lang];
+    }
+    const folderObjects = document.getElementById('folder-objects');
+    if (folderObjects) {
+      folderObjects.title = translations['folderObjects'][lang];
+    }
+    const bucketObjects = document.getElementById('bucket-objects');
+    if (bucketObjects) {
+      bucketObjects.title = translations['bucketObjects'][lang];
+    }
+
+    //Translate table content
+    translateTable(lang);
+  }
+
+  function translateTable(lang) {
+    // Translate table content
+    const entriesLabel = document.querySelector('label[for="dt-length-0"]');
+    if (entriesLabel) {
+      entriesLabel.textContent = translations['tableEntires'][lang];
+    }
+
+    const searchLabel = document.querySelector('label[for="dt-search-0"]');
+    if (searchLabel) {
+      searchLabel.textContent = translations['tableSearch'][lang];
+    }
+    const infoElement = document.getElementById('tb-s3objects_info');
+    if (infoElement) {
+      const [start, end, total] = infoElement.textContent.match(/\d+/g) || [];
+      infoElement.textContent = translations['tablePages'][lang]
+        .replace('{start}', start)
+        .replace('{end}', end)
+        .replace('{total}', total);
+    }
+
+    const previousButton = document.querySelector('#tb-s3objects_previous a');
+    if (previousButton) {
+      previousButton.textContent = translations['tablePrevious'][lang];
+    }
+
+    const nextButton = document.querySelector('#tb-s3objects_next a');
+    if (previousButton) {
+      nextButton.textContent = translations['tableNext'][lang];
+    }
+
+    const tableEmpty = document.querySelector('.dt-empty');
+    if (tableEmpty) {
+      tableEmpty.textContent = translations['tableEmpty'][lang];
+    }
+  }
 </script>
