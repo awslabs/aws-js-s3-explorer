@@ -93,7 +93,7 @@ permissions and limitations under the License.
                                                 <option value="temp">Private Bucket (I have temporary AWS credentials)</option>
                                             </select>
                                         </div>
-                                        <p ng-hide="settings.auth=='anon'"><b>Credentials</b>: this web page uses the <a href="http://aws.amazon.com/sdk-for-browser/" target="_blank">AWS SDK for JavaScript in the Browser</a>. Your AWS credentials are kept in memory and used by the SDK for authentication. Your secret access key is used to sign API requests but it is <b>not</b> sent to the S3 service.</p>
+                                        <p ng-hide="settings.auth=='anon'"><b>Credentials</b>: this web page uses the <a href="http://aws.amazon.com/sdk-for-browser/" target="_blank" rel="noopener noreferrer">AWS SDK for JavaScript in the Browser</a>. Your AWS credentials are kept in memory and used by the SDK for authentication. Your secret access key is used to sign API requests but it is <b>not</b> sent to the S3 service.</p>
                                         <div class="input-group bottom-marg-10" ng-hide="settings.auth=='anon'">
                                             <span class="input-group-addon">Access Key ID</span>
                                             <input name="accesskey" type="text" ng-model="settings.cred.accessKeyId" class="form-control" ng-disabled="settings.auth=='anon'" placeholder="access key id" required/>
@@ -209,7 +209,7 @@ permissions and limitations under the License.
                                 <p>Amazon S3 Explorer is an application that uses the AWS JavaScript SDK in the Browser to make the contents of an S3 bucket easy to view in a web browser.</p>
                                 <p>To upload files, first navigate to the bucket &amp; folder of your choice and then drag &amp; drop files onto the main S3 Explorer table.</p>
                                 <p>To delete files, first choose the files you want to delete by clicking checkboxes in the Select column, then click the Trash icon. You will be asked to confirm this action.</p>
-                                <p>For more details and to download the source code, see our <a target="_blank" href="https://github.com/awslabs/aws-js-s3-explorer">GitHub page</a>.</p>
+                                <p>For more details and to download the source code, see our <a target="_blank" href="https://github.com/awslabs/aws-js-s3-explorer" rel="noopener noreferrer">GitHub page</a>.</p>
                             </div>
                             <div class="tab-pane" id="cors" ng-hide="!info.cors">
                                 <br/>
@@ -250,7 +250,7 @@ To do this, select your bucket in the buckets panel of the Amazon S3 Console and
 &lt;/CORSConfiguration&gt;
 </pre>
 <p>
-Please see the project <a target="_blank" href="https://github.com/awslabs/aws-js-s3-explorer/blob/v2-alpha/README.md">README</a> for more specific details on how to create an appropriate CORS configuration.
+Please see the project <a target="_blank" href="https://github.com/awslabs/aws-js-s3-explorer/blob/v2-alpha/README.md" rel="noopener noreferrer">README</a> for more specific details on how to create an appropriate CORS configuration.
 </p>
 
                                     </p>
@@ -274,7 +274,7 @@ Please see the project <a target="_blank" href="https://github.com/awslabs/aws-j
 }
 </pre>
 <p>
-Please see the project <a target="_blank" href="https://github.com/awslabs/aws-js-s3-explorer/blob/v2-alpha/README.md">README</a> for more specific details on how to create an appropriate S3 bucket policy.
+Please see the project <a target="_blank" href="https://github.com/awslabs/aws-js-s3-explorer/blob/v2-alpha/README.md" rel="noopener noreferrer">README</a> for more specific details on how to create an appropriate S3 bucket policy.
 </p>
                                         </p>
                             </div>

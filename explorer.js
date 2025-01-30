@@ -307,7 +307,7 @@ function ViewController($scope, SharedService) {
         } else if ($scope.view.settings.auth === 'anon') {
             // Unauthenticated user has clicked on an object so download it
             // in new window/tab
-            window.open(target.href, '_blank');
+            window.open(target.href, '_blank', 'noopener,noreferrer');
         } else {
             // Authenticated user has clicked on an object so create pre-signed
             // URL and download it in new window/tab
@@ -322,7 +322,7 @@ function ViewController($scope, SharedService) {
                     SharedService.showError(params, err);
                 } else {
                     DEBUG.log('url:', url);
-                    window.open(url, '_blank');
+                    window.open(url, '_blank', 'noopener,noreferrer');
                 }
             });
         }
