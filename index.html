@@ -690,7 +690,7 @@ permissions and limitations under the License.
                 (s3exp_lister = s3list(s3exp_config, s3draw)).go();
                 // Else user has clicked on an object so download it in new window/tab
             } else {
-                window.open(target.href, '_blank');
+                window.open(target.href, '_blank', 'noopener,noreferrer');
             }
             return false;
         });
