@@ -135,6 +135,13 @@ function stripLeadTrailSlash(s) {
     return s.replace(/^\/+/g, '').replace(/\/+$/g, '');
 }
 
+// Get a url query string value for key
+function qs(key) {
+    key = key.replace(/[*+?^$.\[\]{}()|\\\/]/g, "\\$&"); // escape RegEx meta chars
+    var match = location.search.match(new RegExp("[?&]"+key+"=([^&]+)(&|$)"));
+    return match && decodeURIComponent(match[1].replace(/\+/g, " "));
+}
+
 //
 // Shared service that all controllers can use
 //
@@ -158,6 +165,20 @@ function SharedService($rootScope) {
     shared.changeSettings = (settings) => {
         DEBUG.log('SharedService::changeSettings');
         DEBUG.log('SharedService::changeSettings settings', settings);
+
+        if ('URLSearchParams' in window) {
+            // store settings in query parameter
+            // create a deep copy and redact sensitive information
+            const settingsCopy = JSON.parse(JSON.stringify(settings));
+            settingsCopy.cred.secretAccessKey = "";
+            settingsCopy.cred.sessionToken = "";
+            settingsCopy.mfa.code = "";
+
+            const searchParams = new URLSearchParams(window.location.search)
+            searchParams.set("settings", btoa(JSON.stringify(settingsCopy)));
+            const newRelativePathQuery = window.location.pathname + '?' + searchParams.toString();
+            history.replaceState(null, '', newRelativePathQuery);
+        }
 
         this.settings = settings;
         this.viewprefix = null;
@@ -922,12 +943,24 @@ function SettingsController($scope, SharedService) {
 
     // Initialized for an unauthenticated user exploring the current bucket
     // TODO: calculate current bucket and initialize below
-    $scope.settings = {
+
+    const defaultSettings = {
         auth: 'anon', region: '', bucket: '', entered_bucket: '', selected_bucket: '', view: 'folder', delimiter: '/', prefix: '',
     };
-    $scope.settings.mfa = { use: 'no', code: '' };
-    $scope.settings.cred = { accessKeyId: '', secretAccessKey: '', sessionToken: '' };
-    $scope.settings.stscred = null;
+
+    defaultSettings.mfa = { use: 'no', code: '' };
+    defaultSettings.cred = { accessKeyId: '', secretAccessKey: '', sessionToken: '' };
+    defaultSettings.stscred = null;
+
+    $scope.settings = defaultSettings;
+
+    const encodedSettings = qs('settings');
+
+    if(encodedSettings){
+        const settingsJSON = atob(encodedSettings);
+        const settingsObj = JSON.parse(settingsJSON);
+        $scope.settings = settingsObj;
+    }
 
     // TODO: at present the Settings dialog closes after credentials have been supplied
     // even if the subsequent AWS calls fail with networking or permissions errors. It
