@@ -2,6 +2,7 @@
 
 <!--
 Copyright 2014-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+Copyright 2025, Simson L. Garfinkel
 
 Licensed under the Apache License, Version 2.0 (the "License").
 
@@ -16,6 +17,8 @@ either express or implied. See the License for the specific language governing
 permissions and limitations under the License.
 -->
 
+<!-- https://github.com/awslabs/aws-js-s3-explorer -->
+
 <html lang="en">
 
 <head>
@@ -23,10 +26,21 @@ permissions and limitations under the License.
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="shortcut icon" href="https://aws.amazon.com/favicon.ico">
+
+    <!-- 1. jQuery FIRST -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+    <!-- 2. DataTables core and Bootstrap integration -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/2.0.1/css/dataTables.bootstrap.min.css">
+    <script src="https://cdn.datatables.net/2.0.1/js/dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/2.0.1/js/dataTables.bootstrap.min.js"></script>
+
+    <!-- 3. Other styles/scripts -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/css/bootstrap.min.css" integrity="sha384-HSMxcRTRxnN+Bdg0JdbxYKrThecOKuH5zCYotlSAcp1+c8xmyTe9GYg1l9a69psu" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/css/bootstrap-theme.min.css" integrity="sha384-6pzBo3FDv/PJ8r2KRkGHifhEocL+1X2rVCTTkUfGk7/0pbek5mMa1upzvWbrUbOZ" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-    <link rel="stylesheet" href="https://cdn.datatables.net/2.0.1/css/dataTables.bootstrap.min.css" integrity="sha512-VMR2J9d1Y/nEZh/4y/hpeGiyRmNpQFSFUgP9gqY3/2kLf3hFUdmdgkwfzazE3HllT7wa+pSH78lr4guyJXN9zQ==" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
     <style type="text/css">
         #wrapper {
             padding-left: 0;
@@ -64,13 +78,34 @@ permissions and limitations under the License.
         #navbuttons .btn {
             padding: 3px 6px;
         }
+
+        /* --- Add these lines for the Object column --- */
+        #tb-s3objects td:first-child,
+        #tb-s3objects th:first-child {
+            white-space: nowrap;
+            width: auto;
+            min-width: 250px;
+            max-width: 1000px;
+        }
+        /* Optionally, allow horizontal scrolling if the name is extremely long */
+        #tb-s3objects td:first-child {
+            overflow-x: auto;
+        }
+        /* --------------------------------------------- */
+
+        .JColResizer .JCLRgrip {
+            background-color: #ccc;
+            width: 5px;
+            cursor: col-resize;
+        }
     </style>
+
 </head>
 
 <!-- DEBUG: Enable this for red outline on all elements -->
 <!-- <style media="screen" type="text/css"> * { outline: 1px red solid; } </style> -->
 
-<body>
+<body lang="en-US" style="background:white">
     <div id="page-wrapper">
         <div class="row">
             <div class="col-lg-12">
@@ -103,8 +138,8 @@ permissions and limitations under the License.
                                             <span id="hide-folders-text">Hide folders?</span>
                                     </label>
                                 </div>
-                                <!-- Folder/Bucket radio group -->
-                                <div class="btn-group" data-toggle="buttons">
+                                <!-- Folder/Bucket radio group (digitalcorpora add id) -->
+                                <div id="folder-bucket-radio-group" class="btn-group" data-toggle="buttons">
                                     <label class="btn btn-primary active" id="folder-objects" title="View all objects in folder">
                                         <i class="fa fa-angle-double-up"></i>
                                         <input type="radio" name="optionsdepth" value="folder" id="optionfolder" checked>&nbsp;<span id="folder-text">Folder</span>
@@ -158,7 +193,6 @@ permissions and limitations under the License.
         </div>
     </div>
 </body>
-
 </html>
 
 <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g==" crossorigin="anonymous"></script>
@@ -170,9 +204,9 @@ permissions and limitations under the License.
 <script src="https://cdn.datatables.net/2.0.1/js/dataTables.bootstrap.min.js" integrity="sha512-VA6ybNLYE2gJREhDvihaesx+djpqYnqOIq8eOVEZPF/lb/Ylur3kIHp46mOVBcyEn6gMPPDGNREsmEnviczMlg==" crossorigin="anonymous"></script>
 
 <script type="text/javascript">
-    var HIDE_INDEX = true;
+  var HIDE_INDEX = true;
     // CloudFront Support
-    var HIDE_S3_ID = true;
+    var HIDE_S3_ID = false;
     var s3exp_config = {
         Region: '',
         Bucket: '',
@@ -188,8 +222,62 @@ permissions and limitations under the License.
         size: 4
     };
 
+
     AWS.config.region = 'us-east-1';
     console.log('Region: ' + AWS.config.region);
+
+  async function fetchS3ObjectViaHttp(bucket, key) {
+    const region = AWS.config.region === 'us-east-1' ? '' : `-${AWS.config.region}`;
+    const encodedKey = key.split('/').map(encodeURIComponent).join('/');
+    const url = `https://${bucket}.s3${region}.amazonaws.com/${encodedKey}`;
+
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch ${key}: ${response.status}`);
+    }
+    return await response.text();
+  }
+
+
+  async function renderReadmes(bucket) {
+    console.log("render readmes");
+    const table = $('#tb-s3objects').DataTable();
+    const rows = table.rows().data().toArray();
+    const readmes = rows.filter(row => row.Key.match(/(^|\/)readme.*\.(txt|md|html)$/i));
+
+    const container = document.getElementById('readme-content');
+    container.innerHTML = '';
+
+    for (const file of readmes) {
+      const heading = document.createElement('h1');
+      heading.textContent = file.Key;
+      container.appendChild(heading);
+
+      try {
+        const text = await fetchS3ObjectViaHttp(bucket, file.Key);
+        const div = document.createElement('div');
+
+        if (/\.md$/i.test(file.Key)) {
+          div.innerHTML = marked.parse(text);
+        } else if (/\.html$/i.test(file.Key)) {
+          const match = text.match(/<body[^>]*>((.|[\r\n])*)<\/body>/i);
+          div.innerHTML = match ? match[1] : "(Could not extract <body>)";
+        } else {
+          div.style.fontFamily = "monospace";
+          div.style.whiteSpace = "pre-wrap";
+          div.style.wordBreak = "break-word";
+          div.textContent = text;
+        }
+
+        container.appendChild(div);
+      } catch (err) {
+        console.error(`Error loading ${file.Key}:`, err);
+        const errDiv = document.createElement('div');
+        errDiv.textContent = `Error loading ${file.Key}`;
+        container.appendChild(errDiv);
+      }
+    }
+  }
 
     // Initialize S3 SDK and the moment library (for time formatting utilities)
     var s3 = new AWS.S3();
@@ -284,7 +372,7 @@ permissions and limitations under the License.
 
     // Remove hash from document URL
     function removeHash() {
-        history.pushState("", document.title, window.location.pathname + window.location.search);
+        history.replaceState("", document.title, window.location.pathname + window.location.search);
     }
 
     // We are going to generate bucket/folder breadcrumbs. The resulting HTML will
@@ -324,7 +412,7 @@ permissions and limitations under the License.
         // Empty the current breadcrumb list
         $('#breadcrumb li').remove();
 
-        // Now build the new breadcrumb list
+        // Now build the new breadcrumb list and list the bucket
         var buildprefix = '';
         $.each(parts, function(ii, part) {
             var ipart;
@@ -375,10 +463,12 @@ permissions and limitations under the License.
     }
 
     function s3draw(data, complete) {
+        console.log('DRAW rows:', data.CommonPrefixes.length, 'prefixes and', data.Contents.length, 'contents');
         $('li.li-bucket').remove();
         folder2breadcrumbs(data);
 
         // Add each part of current path (S3 bucket plus folder hierarchy) into the breadcrumbs
+        $('#tb-s3objects').DataTable().clear();            // clear to be safe
         $.each(data.CommonPrefixes, function(i, prefix) {
             $('#tb-s3objects').DataTable().rows.add([{
                 Key: prefix.Prefix
@@ -387,6 +477,8 @@ permissions and limitations under the License.
 
         // Add S3 objects to DataTable
         $('#tb-s3objects').DataTable().rows.add(data.Contents).draw();
+
+        renderReadmes(data.params.Bucket); // digitalcorpora --- check for readme.
     }
 
     function s3list(config, completecb) {
@@ -617,6 +709,7 @@ permissions and limitations under the License.
                 [1, 'asc'],
                 [0, 'asc']
             ],
+            colReorder: true,
             aoColumnDefs: [{
                 "aTargets": [0],
                 "mData": "Key",
@@ -650,6 +743,13 @@ permissions and limitations under the License.
             }, ]
         });
 
+        // Make columns resizable after DataTable is initialized
+        // $('#tb-s3objects').colResizable({
+        //     liveDrag: true,
+        //     minWidth: 40,
+        //     resizeMode: 'flex'
+        // });
+
         $('#tb-s3objects').DataTable().column(s3exp_columns.key).visible(false);
         console.log("jQuery version=" + $.fn.jquery);
 
@@ -676,23 +776,31 @@ permissions and limitations under the License.
         // because the object/folder rows are added dynamically and we do not want
         // to have to assign click handlers to each and every row.
         $('#tb-s3objects').on('click', 'a', function(event) {
-            event.preventDefault();
-            var target = event.target;
-            console.log("target href=" + target.href);
-            console.log("target dataset=" + JSON.stringify(target.dataset));
+          event.preventDefault();
+          var target = event.target;
+          console.log("target href=" + target.href);
+          console.log("target dataset=" + JSON.stringify(target.dataset));
 
-            // If the user has clicked on a folder then navigate into that folder
-            if (target.dataset.s3 === "folder") {
-                resetDepth();
-                delete s3exp_config.ContinuationToken;
-                s3exp_config.Prefix = target.dataset.prefix;
-                s3exp_config.Delimiter = $("input[name='optionsdepth']:checked").val() == "folder" ? "/" : "";
-                (s3exp_lister = s3list(s3exp_config, s3draw)).go();
-                // Else user has clicked on an object so download it in new window/tab
-            } else {
-                window.open(target.href, '_blank', 'noopener,noreferrer');
-            }
+          // if the user has clicked on an object, then follow the  click
+          if (target.dataset.s3 === "object") {
+            // Temporarily remove hashchange listener
+            //window.removeEventListener('hashchange', handleHashChange);
+            window.open(target.href, '_blank', 'noopener,noreferrer');
             return false;
+          }
+
+          // If the user has clicked on a folder then navigate into that folder
+          if (target.dataset.s3 === "folder") {
+            resetDepth();
+            delete s3exp_config.ContinuationToken;
+            s3exp_config.Prefix = target.dataset.prefix;
+            s3exp_config.Delimiter = $("input[name='optionsdepth']:checked").val() == "folder" ? "/" : "";
+            (s3exp_lister = s3list(s3exp_config, s3draw)).go();
+            // Else user has clicked on an object so download it in new window/tab
+          } else {
+            window.open(target.href, '_blank', 'noopener,noreferrer');
+          }
+          return false;
         });
 
         // Document URL typically looks like this for path-style URLs:
@@ -738,7 +846,7 @@ permissions and limitations under the License.
         // derive the initial bucket from the document URL (useful if index.html was
         // launched directly from within a bucket), else prompt the user.
         if (s3exp_config.Bucket) {
-            (s3exp_lister = s3list(s3exp_config, s3draw)).go();
+          (s3exp_lister = s3list(s3exp_config, s3draw)).go();
         } else if (parser.hostname.endsWith('cloudfront.net') && s3_location) {
             var s3_url;
             var bucket;
@@ -878,6 +986,50 @@ permissions and limitations under the License.
         } else {
             promptForBucketInput();
         }
+
+        // After S3 config is set up and before the initial listing, handle file hash
+        function handleHashForFile(openInNewTab) {
+            var hash = window.location.hash ? window.location.hash.substring(1) : '';
+            if (hash && !hash.endsWith('/')) {
+                if (s3exp_config && s3exp_config.Bucket) {
+                    var url = object2hrefvirt(s3exp_config.Bucket, hash);
+                    if (openInNewTab) {
+                        window.open(url, '_blank', 'noopener,noreferrer');
+                    } else {
+                        window.location = url;
+                    }
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // After S3 config is set up and before the initial listing:
+        if (handleHashForFile(false)) {
+            // If a file was opened, do not load the explorer
+            return;
+        }
+
+        // If the hash is a folder, set Prefix accordingly
+        var hash = window.location.hash ? window.location.hash.substring(1) : '';
+        if (hash && hash.endsWith('/')) {
+            s3exp_config.Prefix = hash;
+        }
+
+        // Now do the initial listing
+        (s3exp_lister = s3list(s3exp_config, s3draw)).go();
+
+        // Restore the hashchange event listener
+        window.addEventListener('hashchange', function() {
+            if (handleHashForFile(false)) {
+                return;
+            }
+            var newPrefix = window.location.hash ? window.location.hash.substring(1) : '';
+            s3exp_config.Prefix = newPrefix;
+            s3exp_config.Delimiter = $("input[name='optionsdepth']:checked").val() == "folder" ? "/" : "";
+            delete s3exp_config.ContinuationToken;
+            (s3exp_lister = s3list(s3exp_config, s3draw)).go();
+        });
     });
 
   // Translation dictionary
