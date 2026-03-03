@@ -659,7 +659,7 @@ function ViewController($scope, SharedService) {
 
     this.renderLastModified = (data, _type, _full) => {
         if (data) {
-            return moment(data).fromNow();
+            return moment.min(moment(data), moment()).fromNow();
         }
 
         return '';
@@ -684,7 +684,7 @@ function ViewController($scope, SharedService) {
     // Object sizes are displayed in nicer format e.g. 1.2 MB but are otherwise
     // handled as simple number of bytes e.g. for sorting purposes
     this.dataSize = (source, type, _val) => {
-        if (source.Size) {
+        if (source.Size != null) {
             return (type === 'display') ? bytesToSize(source.Size) : source.Size;
         }
 
@@ -1057,7 +1057,10 @@ function UploadController($scope, SharedService) {
                     }
                 } else {
                     DEBUG.log('Uploaded', file.file.name, 'to', data.Location);
-                    $(`#upload-td-progress-${ii}`).addClass('progress-bar-success');
+                    const col = $(`#upload-td-progress-${ii}`);
+                    col.attr('data-percent', 100);
+                    col.css('width', '100%').text('100%');
+                    col.addClass('progress-bar-success');
 
                     $scope.$apply(() => {
                         $scope.upload.button = `Upload (${count})`;
@@ -1191,19 +1194,15 @@ function UploadController($scope, SharedService) {
                     $scope.upload.files = [];
                     for (let ii = 0; ii < files.length; ii++) {
                         const fileii = files[ii];
+                        DEBUG.log('File:', fileii.name, 'Size:', fileii.size, 'Type:', fileii.type);
 
-                        // See https://github.com/awslabs/aws-js-s3-explorer/issues/71
-                        if (fileii.type || fileii.size % 4096 !== 0 || fileii.size > 1048576) {
-                            DEBUG.log('File:', fileii.name, 'Size:', fileii.size, 'Type:', fileii.type);
-
-                            $scope.upload.files.push({
-                                file: fileii,
-                                name: fileii.fullPath || fileii.name,
-                                type: fileii.type,
-                                size: bytesToSize(fileii.size),
-                                short: path2short(fileii.fullPath || fileii.name),
-                            });
-                        }
+                        $scope.upload.files.push({
+                            file: fileii,
+                            name: fileii.fullPath || fileii.name,
+                            type: fileii.type,
+                            size: bytesToSize(fileii.size),
+                            short: path2short(fileii.fullPath || fileii.name),
+                        });
                     }
                 });
 
@@ -1401,7 +1400,7 @@ function TrashController($scope, SharedService) {
 
             const lastmodified = isfolder(obj.Key)
                 ? ''
-                : moment(obj.LastModified).fromNow();
+                : moment.min(moment(obj.LastModified), moment()).fromNow();
 
             const timestamp = obj.LastModified
                 ? moment(obj.LastModified).local().format('YYYY-MM-DD HH:mm:ss')
