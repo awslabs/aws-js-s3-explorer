@@ -1292,93 +1292,171 @@ function TrashController($scope, SharedService) {
     const $btnCancel = $('#trash-btn-cancel');
 
     //
-    // Delete a list of objects from the provided S3 bucket
+    // Delete all objects under the given keys from the provided S3 bucket.
+    // Uses batched deleteObjects (up to 1000 per call), full pagination
+    // via listObjectsV2, and exponential backoff for throttle/retry handling.
     //
-    $scope.deleteFiles = (Bucket, objects, recursion) => {
+    $scope.deleteFiles = async (Bucket, objects) => {
         DEBUG.log('Delete files:', objects);
 
         $scope.$apply(() => {
             $scope.trash.trashing = true;
+            $scope.trash.button = 'Listing...';
         });
 
-        for (let ii = 0; ii < objects.length; ii++) {
-            DEBUG.log('Delete key:', objects[ii].Key);
-            DEBUG.log('Object:', objects[ii]);
-            DEBUG.log('Index:', ii);
+        const s3 = new AWS.S3(AWS.config);
+        const delimiter = SharedService.getSettings().delimiter;
 
-            const s3 = new AWS.S3(AWS.config);
+        // Helper: exponential backoff wrapper for any S3 call
+        async function s3CallWithRetry(method, params, maxRetries = 5) {
+            for (let attempt = 0; attempt <= maxRetries; attempt++) {
+                try {
+                    return await s3[method](params).promise();
+                } catch (err) {
+                    const retryable = err.retryable
+                        || err.code === 'SlowDown'
+                        || err.code === 'Throttling'
+                        || err.code === 'ServiceUnavailable'
+                        || err.statusCode === 503
+                        || err.statusCode === 429;
 
-            // If the user is deleting a folder then recursively list
-            // objects and delete them
-            if (isfolder(objects[ii].Key) && SharedService.getSettings().delimiter) {
-                const params = { Bucket, Prefix: objects[ii].Key };
-                s3.listObjects(params, (err, data) => {
-                    if (err) {
-                        if (!recursion) {
-                            // AccessDenied is a normal consequence of lack of permission
-                            // and we do not treat this as completely unexpected
-                            if (err.code === 'AccessDenied') {
-                                $(`#trash-td-${ii}`).html('<span class="trasherror">Access Denied</span>');
-                            } else {
-                                DEBUG.log(JSON.stringify(err));
-                                $(`#trash-td-${ii}`).html(`<span class="trasherror">Failed:&nbsp${err.code}</span>`);
-                                SharedService.showError(params, err);
-                            }
-                        } else {
-                            DEBUG.log(JSON.stringify(err));
-                            SharedService.showError(params, err);
-                        }
-                    } else if (data.Contents.length > 0) {
-                        $scope.deleteFiles(Bucket, data.Contents, true);
+                    if (retryable && attempt < maxRetries) {
+                        // Exponential backoff: 1s, 2s, 4s, 8s, 16s + jitter
+                        const baseDelay = Math.pow(2, attempt) * 1000;
+                        const jitter = Math.random() * 1000;
+                        DEBUG.log(`Throttled (${err.code}), retry ${attempt + 1} in ${Math.round(baseDelay + jitter)}ms`);
+                        await new Promise(r => setTimeout(r, baseDelay + jitter));
+                    } else {
+                        throw err;
                     }
+                }
+            }
+        }
+
+        // Helper: collect ALL keys under a prefix (fully paginated)
+        // Calls onProgress(count) after each page so the UI can show progress
+        async function listAllKeys(Prefix, onProgress) {
+            const allKeys = [];
+            let ContinuationToken;
+
+            do {
+                const params = { Bucket, Prefix, ContinuationToken };
+                const data = await s3CallWithRetry('listObjectsV2', params);
+                if (data.Contents) {
+                    for (const obj of data.Contents) {
+                        allKeys.push(obj.Key);
+                    }
+                }
+                if (onProgress) {
+                    onProgress(allKeys.length);
+                }
+                ContinuationToken = data.IsTruncated
+                    ? data.NextContinuationToken
+                    : undefined;
+            } while (ContinuationToken);
+
+            return allKeys;
+        }
+
+        // Helper: batch-delete an array of keys, 1000 at a time
+        // Updates the Delete button label after each batch with progress
+        async function batchDelete(keys) {
+            const BATCH_SIZE = 1000; // S3 deleteObjects limit
+            let deletedCount = 0;
+            const totalCount = keys.length;
+
+            for (let i = 0; i < keys.length; i += BATCH_SIZE) {
+                const batch = keys.slice(i, i + BATCH_SIZE);
+                const params = {
+                    Bucket,
+                    Delete: {
+                        Objects: batch.map(Key => ({ Key })),
+                        Quiet: true, // suppress per-key success responses
+                    },
+                };
+                const result = await s3CallWithRetry('deleteObjects', params);
+
+                // Count failures from this batch
+                let batchErrors = 0;
+                if (result.Errors && result.Errors.length > 0) {
+                    batchErrors = result.Errors.length;
+                    for (const e of result.Errors) {
+                        DEBUG.log('Failed to delete', e.Key, e.Code, e.Message);
+                    }
+                }
+
+                deletedCount += batch.length - batchErrors;
+                DEBUG.log(`Deleted batch of ${batch.length} objects (${deletedCount} of ${totalCount} total)`);
+
+                // Update button label with running progress
+                $scope.$apply(() => {
+                    $scope.trash.button = `Deleted ${deletedCount} of ${totalCount}`;
                 });
             }
+        }
 
-            const params = { Bucket, Key: objects[ii].Key };
+        // Main logic: gather all keys, then batch-delete
+        let allKeys = [];
+        for (let ii = 0; ii < objects.length; ii++) {
+            const key = objects[ii].Key;
 
-            DEBUG.log('Delete params:', params);
-            s3.deleteObject(params, (err, _data) => {
-                if (err) {
-                    if (!recursion) {
-                        // AccessDenied is a normal consequence of lack of permission
-                        // and we do not treat this as completely unexpected
-                        if (err.code === 'AccessDenied') {
-                            $(`#trash-td-${ii}`).html('<span class="trasherror">Access Denied</span>');
-                        } else {
-                            DEBUG.log(JSON.stringify(err));
-                            $(`#trash-td-${ii}`).html(`<span class="trasherror">Failed:&nbsp${err.code}</span>`);
-                            SharedService.showError(params, err);
-                        }
+            if (isfolder(key) && delimiter) {
+                // Folder: recursively list every object under this prefix
+                try {
+                    const folderKeys = await listAllKeys(key, (found) => {
+                        $scope.$apply(() => {
+                            $scope.trash.button = `Listing... (${found + allKeys.length} found)`;
+                        });
+                    });
+                    allKeys = allKeys.concat(folderKeys);
+                } catch (err) {
+                    if (err.code === 'AccessDenied') {
+                        $(`#trash-td-${ii}`).html('<span class="trasherror">Access Denied</span>');
                     } else {
                         DEBUG.log(JSON.stringify(err));
-                        SharedService.showError(params, err);
+                        $(`#trash-td-${ii}`).html(`<span class="trasherror">Failed:&nbsp;${err.code}</span>`);
+                        SharedService.showError({ Bucket, Prefix: key }, err);
                     }
-                } else {
-                    DEBUG.log('Deleted', objects[ii].Key, 'from', Bucket);
-                    let count = $btnDelete.attr('data-filecount');
-
-                    if (!recursion) {
-                        $(`#trash-td-${ii}`).html('<span class="trashdeleted">Deleted</span>');
-                        DEBUG.log('Delete count was', count, 'now', count - 1);
-                        $btnDelete.attr('data-filecount', --count);
-                    }
-
-                    // Update count in Delete button
-                    $scope.$apply(() => {
-                        $scope.trash.button = `Delete (${count})`;
-                    });
-
-                    // If all files deleted then update buttons
-                    if (count === 0) {
-                        $btnDelete.hide();
-                        $btnCancel.text('Close');
-                    }
-
-                    // Refresh underlying folder view
-                    SharedService.viewRefresh();
+                    continue;
                 }
-            });
+            } else {
+                allKeys.push(key);
+            }
         }
+
+        // Deduplicate (a folder marker may appear in its own listing)
+        allKeys = [...new Set(allKeys)];
+
+        DEBUG.log(`Total keys to delete: ${allKeys.length}`);
+
+        try {
+            await batchDelete(allKeys);
+
+            // Mark all top-level items as deleted in the UI
+            for (let ii = 0; ii < objects.length; ii++) {
+                $(`#trash-td-${ii}`).html('<span class="trashdeleted">Deleted</span>');
+            }
+        } catch (err) {
+            DEBUG.log('Batch delete failed:', JSON.stringify(err));
+            SharedService.showError({ Bucket }, err);
+
+            for (let ii = 0; ii < objects.length; ii++) {
+                if (err.code === 'AccessDenied') {
+                    $(`#trash-td-${ii}`).html('<span class="trasherror">Access Denied</span>');
+                } else {
+                    $(`#trash-td-${ii}`).html(`<span class="trasherror">Failed:&nbsp;${err.code}</span>`);
+                }
+            }
+        }
+
+        // Update UI after all deletions complete
+        $scope.$apply(() => {
+            $scope.trash.button = 'Delete (0)';
+            $scope.trash.trashing = false;
+        });
+        $btnDelete.hide();
+        $btnCancel.text('Close');
+        SharedService.viewRefresh();
     };
 
     $scope.$on('broadcastTrashObjects', (e, args) => {
