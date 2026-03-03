@@ -880,7 +880,7 @@ function InfoController($scope) {
             } else {
                 DEBUG.log(data.Policy);
                 $scope.info.policy = data.Policy;
-                DEBUG.log('Info:', $scope.info);
+                DEBUG.log('Info:', { ...$scope.info, settings: $scope.info.settings && { ...$scope.info.settings, cred: '[REDACTED]', stscred: '[REDACTED]' } });
                 text = JSON.stringify(JSON.parse(data.Policy.trim()), null, 2);
             }
             $('#info-policy').text(text);
@@ -903,7 +903,7 @@ function InfoController($scope) {
             } else {
                 DEBUG.log(data.CORSRules);
                 [$scope.info.cors] = data.CORSRules;
-                DEBUG.log('Info:', $scope.info);
+                DEBUG.log('Info:', { ...$scope.info, settings: $scope.info.settings && { ...$scope.info.settings, cred: '[REDACTED]', stscred: '[REDACTED]' } });
                 text = JSON.stringify(data.CORSRules, null, 2);
             }
             $('#info-cors').text(text);
