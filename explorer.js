@@ -12,13 +12,6 @@
 // either express or implied. See the License for the specific language governing
 // permissions and limitations under the License.
 
-/* ESLint file-level overrides */
-/* global AWS bootbox document moment window $ angular:true */
-/* eslint no-unused-vars: ["error", { "argsIgnorePattern": "^_" }] */
-/* eslint-disable no-console */
-/* eslint no-plusplus: "off" */
-/* eslint-env es6 */
-
 const s3ExplorerColumns = {
     check: 0, object: 1, folder: 2, date: 3, timestamp: 4, storageclass: 5, size: 6,
 };
@@ -848,7 +841,6 @@ function AddFolderController($scope, SharedService) {
 // Note: do not be tempted to correct the eslint no-unused-vars error
 // with SharedService below. Doing so will break injection.
 //
-// eslint-disable-next-line no-shadow
 function InfoController($scope) {
     DEBUG.log('InfoController init');
     window.infoScope = $scope; // for debugging
@@ -1100,7 +1092,6 @@ function UploadController($scope, SharedService) {
         let readEntries = await readEntriesPromise(directoryReader);
         while (readEntries.length > 0) {
             entries.push(...readEntries);
-            // eslint-disable-next-line no-await-in-loop
             readEntries = await readEntriesPromise(directoryReader);
         }
         return entries;
@@ -1130,13 +1121,11 @@ function UploadController($scope, SharedService) {
             const entry = queue.shift();
             if (entry) {
                 if (entry.isFile) {
-                    // eslint-disable-next-line no-await-in-loop
                     const file = await filePromise(entry);
                     file.fullPath = entry.fullPath.substring(1);
                     fileEntries.push(file);
                 } else if (entry.isDirectory) {
                     const reader = entry.createReader();
-                    // eslint-disable-next-line no-await-in-loop
                     queue.push(...await readAllDirectoryEntries(reader));
                 }
             }
