@@ -4,6 +4,7 @@ import globals from "globals";
 export default [
     js.configs.recommended,
     {
+        files: ["**/*.js"],
         languageOptions: {
             ecmaVersion: 2020,
             sourceType: "script",
@@ -45,6 +46,12 @@ export default [
             "keyword-spacing": "error",
             "arrow-spacing": "error",
             "no-multiple-empty-lines": ["error", { "max": 1, "maxEOF": 0 }],
+        },
+    },
+    {
+        files: ["**/*.mjs"],
+        languageOptions: {
+            sourceType: "module",
         },
     },
 ];
