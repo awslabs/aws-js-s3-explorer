@@ -1332,50 +1332,44 @@ function TrashController($scope, SharedService) {
             }
         }
 
-        // Helper: collect ALL keys under a prefix (fully paginated)
-        // Calls onProgress(count) after each page so the UI can show progress
-        async function listAllKeys(Prefix, onProgress) {
-            const allKeys = [];
+        // Helper: interleaved list-and-delete for a prefix.
+        // Lists one page of keys at a time (up to 1000) and deletes
+        // that batch before listing the next page, so we never hold
+        // more than one page of keys in memory.
+        // Returns the number of successfully deleted keys.
+        async function listAndDelete(Prefix, progressOffset) {
+            const BATCH_SIZE = 1000; // S3 deleteObjects limit
             let ContinuationToken;
+            let deletedCount = 0;
 
             do {
-                const params = { Bucket, Prefix, ContinuationToken };
-                const data = await s3CallWithRetry('listObjectsV2', params);
+                // --- LIST one page ---
+                const listParams = { Bucket, Prefix, MaxKeys: BATCH_SIZE, ContinuationToken };
+                const data = await s3CallWithRetry('listObjectsV2', listParams);
+
+                const keys = [];
                 if (data.Contents) {
                     for (const obj of data.Contents) {
-                        allKeys.push(obj.Key);
+                        keys.push(obj.Key);
                     }
                 }
-                if (onProgress) {
-                    onProgress(allKeys.length);
-                }
+
                 ContinuationToken = data.IsTruncated
                     ? data.NextContinuationToken
                     : undefined;
-            } while (ContinuationToken);
 
-            return allKeys;
-        }
+                if (keys.length === 0) break;
 
-        // Helper: batch-delete an array of keys, 1000 at a time
-        // Updates the Delete button label after each batch with progress
-        async function batchDelete(keys) {
-            const BATCH_SIZE = 1000; // S3 deleteObjects limit
-            let deletedCount = 0;
-            const totalCount = keys.length;
-
-            for (let i = 0; i < keys.length; i += BATCH_SIZE) {
-                const batch = keys.slice(i, i + BATCH_SIZE);
-                const params = {
+                // --- DELETE this batch ---
+                const deleteParams = {
                     Bucket,
                     Delete: {
-                        Objects: batch.map(Key => ({ Key })),
-                        Quiet: true, // suppress per-key success responses
+                        Objects: keys.map(Key => ({ Key })),
+                        Quiet: true,
                     },
                 };
-                const result = await s3CallWithRetry('deleteObjects', params);
+                const result = await s3CallWithRetry('deleteObjects', deleteParams);
 
-                // Count failures from this batch
                 let batchErrors = 0;
                 if (result.Errors && result.Errors.length > 0) {
                     batchErrors = result.Errors.length;
@@ -1384,59 +1378,111 @@ function TrashController($scope, SharedService) {
                     }
                 }
 
-                deletedCount += batch.length - batchErrors;
-                DEBUG.log(`Deleted batch of ${batch.length} objects (${deletedCount} of ${totalCount} total)`);
+                deletedCount += keys.length - batchErrors;
+                DEBUG.log(`Deleted batch of ${keys.length} keys (${deletedCount + progressOffset} total so far)`);
 
-                // Update button label with running progress
                 $scope.$apply(() => {
-                    $scope.trash.button = `Deleted ${deletedCount} of ${totalCount}`;
+                    $scope.trash.button = `Deleted ${deletedCount + progressOffset}...`;
                 });
-            }
+            } while (ContinuationToken);
+
+            return deletedCount;
         }
 
-        // Main logic: gather all keys, then batch-delete
-        let allKeys = [];
-        for (let ii = 0; ii < objects.length; ii++) {
-            const key = objects[ii].Key;
+        // Helper: delete a single batch of already-known keys (up to 1000)
+        async function deleteSingleBatch(keys, progressOffset) {
+            const deleteParams = {
+                Bucket,
+                Delete: {
+                    Objects: keys.map(Key => ({ Key })),
+                    Quiet: true,
+                },
+            };
+            const result = await s3CallWithRetry('deleteObjects', deleteParams);
 
-            if (isfolder(key) && delimiter) {
-                // Folder: recursively list every object under this prefix
-                try {
-                    const folderKeys = await listAllKeys(key, (found) => {
-                        $scope.$apply(() => {
-                            $scope.trash.button = `Listing... (${found + allKeys.length} found)`;
-                        });
-                    });
-                    allKeys = allKeys.concat(folderKeys);
-                } catch (err) {
-                    if (err.code === 'AccessDenied') {
-                        $(`#trash-td-${ii}`).html('<span class="trasherror">Access Denied</span>');
-                    } else {
-                        DEBUG.log(JSON.stringify(err));
-                        $(`#trash-td-${ii}`).html(`<span class="trasherror">Failed:&nbsp;${err.code}</span>`);
-                        SharedService.showError({ Bucket, Prefix: key }, err);
-                    }
-                    continue;
+            let batchErrors = 0;
+            if (result.Errors && result.Errors.length > 0) {
+                batchErrors = result.Errors.length;
+                for (const e of result.Errors) {
+                    DEBUG.log('Failed to delete', e.Key, e.Code, e.Message);
                 }
-            } else {
-                allKeys.push(key);
             }
+
+            const deleted = keys.length - batchErrors;
+            DEBUG.log(`Deleted batch of ${keys.length} individual keys (${deleted + progressOffset} total so far)`);
+            return deleted;
         }
 
-        // Deduplicate (a folder marker may appear in its own listing)
-        allKeys = [...new Set(allKeys)];
-
-        DEBUG.log(`Total keys to delete: ${allKeys.length}`);
+        // Main logic: interleave list/delete so we never accumulate all
+        // keys in memory. Folders are streamed via listAndDelete; bare
+        // object keys are collected into a small buffer and flushed in
+        // batches of up to 1000.
+        const BATCH_SIZE = 1000;
+        let totalDeleted = 0;
+        const pendingKeys = []; // buffer for individual (non-folder) keys
+        const deletedSet = new Set(); // track keys already deleted by folder passes
 
         try {
-            await batchDelete(allKeys);
+            for (let ii = 0; ii < objects.length; ii++) {
+                const key = objects[ii].Key;
+
+                if (isfolder(key) && delimiter) {
+                    // Flush any pending individual keys first so progress
+                    // stays coherent
+                    if (pendingKeys.length > 0) {
+                        const batch = pendingKeys.splice(0, pendingKeys.length);
+                        const deleted = await deleteSingleBatch(batch, totalDeleted);
+                        totalDeleted += deleted;
+                        $scope.$apply(() => {
+                            $scope.trash.button = `Deleted ${totalDeleted}...`;
+                        });
+                    }
+
+                    // Folder: stream list/delete one page at a time
+                    try {
+                        const deleted = await listAndDelete(key, totalDeleted);
+                        totalDeleted += deleted;
+                    } catch (err) {
+                        if (err.code === 'AccessDenied') {
+                            $(`#trash-td-${ii}`).html('<span class="trasherror">Access Denied</span>');
+                        } else {
+                            DEBUG.log(JSON.stringify(err));
+                            $(`#trash-td-${ii}`).html(`<span class="trasherror">Failed:&nbsp;${err.code}</span>`);
+                            SharedService.showError({ Bucket, Prefix: key }, err);
+                        }
+                        continue;
+                    }
+                } else {
+                    // Buffer individual keys; flush when we reach a full batch
+                    if (!deletedSet.has(key)) {
+                        pendingKeys.push(key);
+                        deletedSet.add(key);
+                    }
+                    if (pendingKeys.length >= BATCH_SIZE) {
+                        const batch = pendingKeys.splice(0, BATCH_SIZE);
+                        const deleted = await deleteSingleBatch(batch, totalDeleted);
+                        totalDeleted += deleted;
+                        $scope.$apply(() => {
+                            $scope.trash.button = `Deleted ${totalDeleted}...`;
+                        });
+                    }
+                }
+            }
+
+            // Flush remaining individual keys
+            if (pendingKeys.length > 0) {
+                const deleted = await deleteSingleBatch(pendingKeys, totalDeleted);
+                totalDeleted += deleted;
+            }
+
+            DEBUG.log(`Total keys deleted: ${totalDeleted}`);
 
             // Mark all top-level items as deleted in the UI
             for (let ii = 0; ii < objects.length; ii++) {
                 $(`#trash-td-${ii}`).html('<span class="trashdeleted">Deleted</span>');
             }
         } catch (err) {
-            DEBUG.log('Batch delete failed:', JSON.stringify(err));
+            DEBUG.log('Delete failed:', JSON.stringify(err));
             SharedService.showError({ Bucket }, err);
 
             for (let ii = 0; ii < objects.length; ii++) {
