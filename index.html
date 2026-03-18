@@ -93,8 +93,12 @@ permissions and limitations under the License.
                                 </ul>
                             </div>
                         </div>
-                        <!-- Controls -->
+                    <!-- Controls -->
                         <div id="navbuttons" class="pull-right">
+                            <!-- Authentication Status -->
+                            <div id="auth-status" class="btn-group pull-left" style="margin-right: 10px;">
+                                <span id="auth-indicator" class="label label-warning">Authenticating...</span>
+                            </div>
                             <div>
                                 <!-- Hide folders checkbox -->
                                 <div class="btn-group">
@@ -173,6 +177,15 @@ permissions and limitations under the License.
     var HIDE_INDEX = true;
     // CloudFront Support
     var HIDE_S3_ID = true;
+    
+    // Cognito Configuration - REPLACE THESE WITH YOUR VALUES
+    var cognitoConfig = {
+        IdentityPoolId: 'us-east-1:b63906d2-e472-479e-9450-ede901b0c914', // Your actual Identity Pool ID
+        // UserPoolId: 'us-east-1_yourUserPoolId', // Replace with your User Pool ID (optional)
+        // ClientId: 'your-app-client-id', // Replace with your App Client ID (optional)
+        Region: 'us-east-1' // Replace with your region
+    };
+    
     var s3exp_config = {
         Region: '',
         Bucket: '',
@@ -181,6 +194,7 @@ permissions and limitations under the License.
         Delimiter: '/'
     };
     var s3exp_lister = null;
+    var isAuthenticated = false;
     var s3exp_columns = {
         key: 1,
         folder: 2,
@@ -188,8 +202,13 @@ permissions and limitations under the License.
         size: 4
     };
 
-    AWS.config.region = 'us-east-1';
+    AWS.config.region = cognitoConfig.Region;
     console.log('Region: ' + AWS.config.region);
+
+    // Configure Cognito credentials
+    AWS.config.credentials = new AWS.CognitoIdentityCredentials({
+        IdentityPoolId: cognitoConfig.IdentityPoolId
+    });
 
     // Initialize S3 SDK and the moment library (for time formatting utilities)
     var s3 = new AWS.S3();
@@ -197,6 +216,9 @@ permissions and limitations under the License.
 
     // CloudFront Support - Init CF SDK
     var cloudfront = new AWS.CloudFront();
+    
+    // Initialize Cognito authentication
+    initializeCognito();
 
     function bytesToSize(bytes) {
         var sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
@@ -462,7 +484,7 @@ permissions and limitations under the License.
                         console.log('Bucket ' + scope.params.Bucket + ' stopped');
                     } else if (data.IsTruncated) {
                         console.log('Bucket ' + scope.params.Bucket + ' truncated');
-                        s3.makeUnauthenticatedRequest('listObjectsV2', scope.params, scope.cb);
+                        s3.listObjectsV2(scope.params, scope.cb);
                     } else {
                         console.log('Bucket ' + scope.params.Bucket + ' has ' + scope.Contents.length + ' objects, including ' + scope.CommonPrefixes.length + ' prefixes');
                         delete scope.params.ContinuationToken;
@@ -479,7 +501,25 @@ permissions and limitations under the License.
                 scope.cb = this.cb;
                 $('#bucket-loader').addClass('fa-spin');
                 $('#tb-s3objects').DataTable().clear();
-                s3.makeUnauthenticatedRequest('listObjectsV2', scope.params, this.cb);
+                
+                // Ensure we have valid credentials before making S3 call
+                if (!AWS.config.credentials || !AWS.config.credentials.accessKeyId) {
+                    console.log('No valid credentials, refreshing...');
+                    AWS.config.credentials.refresh(function(err) {
+                        if (err) {
+                            console.log('Error refreshing credentials:', err);
+                            bootbox.alert({message: 'Authentication failed: ' + err.message + '. Please refresh the page and try again.'});
+                            $('#bucket-loader').removeClass('fa-spin');
+                            return;
+                        }
+                        console.log('Credentials refreshed successfully');
+                        isAuthenticated = true;
+                        s3.listObjectsV2(scope.params, scope.cb);
+                    });
+                } else {
+                    console.log('Using existing credentials for S3 call');
+                    s3.listObjectsV2(scope.params, scope.cb);
+                }
             },
 
             stop: function() {
@@ -649,6 +689,69 @@ permissions and limitations under the License.
                 }
             }, ]
         });
+
+        // Initialize Cognito and authentication
+        function initializeCognito() {
+            console.log('Initializing Cognito authentication...');
+            
+            // Clear any existing credentials
+            AWS.config.credentials = new AWS.CognitoIdentityCredentials({
+                IdentityPoolId: cognitoConfig.IdentityPoolId
+            });
+            
+            // Get temporary credentials
+            AWS.config.credentials.get(function(err) {
+                if (err) {
+                    console.log('Error getting credentials:', err);
+                    console.log('Error details:', JSON.stringify(err, null, 2));
+                    showAuthenticationUI();
+                    showAuthenticationError();
+                    isAuthenticated = false;
+                    return;
+                }
+                
+                console.log('Cognito credentials obtained successfully');
+                console.log('Access Key ID:', AWS.config.credentials.accessKeyId);
+                console.log('Identity ID:', AWS.config.credentials.identityId);
+                
+                isAuthenticated = true;
+                hideAuthenticationUI();
+                
+                // Set region if it wasn't already configured
+                if (!AWS.config.region) {
+                    AWS.config.region = cognitoConfig.Region;
+                }
+                
+                // Reinitialize S3 with new credentials
+                s3 = new AWS.S3();
+                console.log('S3 client reinitialized with Cognito credentials');
+            });
+        }
+
+        // Show authentication UI
+        function showAuthenticationUI() {
+            var authHtml = '<div id="auth-panel" class="alert alert-warning">' +
+                          '<h4>Authentication Required</h4>' +
+                          '<p>This application requires AWS Cognito authentication to access private S3 resources.</p>' +
+                          '<button id="auth-retry" class="btn btn-primary">Retry Authentication</button>' +
+                          '</div>';
+            $('#page-wrapper').prepend(authHtml);
+            
+            $('#auth-retry').click(function() {
+                initializeCognito();
+            });
+        }
+
+        // Hide authentication UI
+        function hideAuthenticationUI() {
+            $('#auth-panel').remove();
+            $('#auth-indicator').removeClass('label-warning label-danger').addClass('label-success').text('Authenticated');
+        }
+
+        // Show authentication error
+        function showAuthenticationError() {
+            $('#auth-indicator').removeClass('label-warning label-success').addClass('label-danger').text('Authentication Failed');
+        }
 
         $('#tb-s3objects').DataTable().column(s3exp_columns.key).visible(false);
         console.log("jQuery version=" + $.fn.jquery);
