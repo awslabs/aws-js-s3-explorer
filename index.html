@@ -203,7 +203,6 @@ permissions and limitations under the License.
     };
 
     AWS.config.region = cognitoConfig.Region;
-    console.log('Region: ' + AWS.config.region);
 
     // Configure Cognito credentials
     AWS.config.credentials = new AWS.CognitoIdentityCredentials({
@@ -217,8 +216,7 @@ permissions and limitations under the License.
     // CloudFront Support - Init CF SDK
     var cloudfront = new AWS.CloudFront();
     
-    // Initialize Cognito authentication
-    initializeCognito();
+    // Note: initializeCognito() will be called in document.ready section
 
     function bytesToSize(bytes) {
         var sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
@@ -319,14 +317,9 @@ permissions and limitations under the License.
     // Note: this code is a little complex right now so it would be good to find
     // a simpler way to create the breadcrumbs.
     function folder2breadcrumbs(data) {
-        console.log('Bucket: ' + data.params.Bucket);
-        console.log('Prefix: ' + data.params.Prefix);
-
         if (data.params.Prefix && data.params.Prefix.length > 0) {
-            console.log('Set hash: ' + data.params.Prefix);
             window.location.hash = data.params.Prefix;
         } else {
-            console.log('Remove hash');
             removeHash();
         }
 
@@ -340,8 +333,6 @@ permissions and limitations under the License.
                 data.params.Prefix.slice(0, -1).split('/') :
                 data.params.Prefix.split('/'));
         }
-
-        console.log('Parts: ' + parts + ' (length=' + parts.length + ')');
 
         // Empty the current breadcrumb list
         $('#breadcrumb li').remove();
@@ -357,7 +348,6 @@ permissions and limitations under the License.
                 ipart = $('<li>').append(a1);
                 a1.click(function(e) {
                     e.preventDefault();
-                    console.log('Breadcrumb click bucket: ' + data.params.Bucket);
                     s3exp_config = {
                         Bucket: data.params.Bucket,
                         Prefix: '',
@@ -381,7 +371,6 @@ permissions and limitations under the License.
                         // console.log('Part: ' + part + ' has buildprefix: ' + saveprefix);
                         a2.click(function(e) {
                             e.preventDefault();
-                            console.log('Breadcrumb click object prefix: ' + saveprefix);
                             s3exp_config = {
                                 Bucket: data.params.Bucket,
                                 Prefix: saveprefix,
@@ -562,8 +551,6 @@ permissions and limitations under the License.
     }
 
     $(document).ready(function() {
-        console.log('ready');
-
         var s3_location;
 
         // CloudFront Support: get the name of the S3 bucket for this CF distribution
@@ -572,14 +559,13 @@ permissions and limitations under the License.
             type : "get",
             async: false,
             success : function(result) {
-                console.log(result);
                 s3_location = result;
             },
             error: function() {
-                console.log("No CloudFront data found");
+                // No CloudFront data found
             }
          });
-        if (s3_location) { console.log(s3_location);};
+        // Store s3_location if found
 
 
         // Click handler for refresh button (to invoke manual refresh)
@@ -606,12 +592,8 @@ permissions and limitations under the License.
 
         // Folder/Bucket radio button handler
         $("input:radio[name='optionsdepth']").change(function() {
-            console.log("Folder/Bucket option change to " + $(this).val());
-            console.log("Change options: " + $("input[name='optionsdepth']:checked").val());
-
             // If user selected deep then we do need to do a full list
             if ($(this).val() == 'bucket') {
-                console.log("Switch to bucket");
                 var choice = $(this).val();
                 $('#tb-s3objects').DataTable().column(1).visible(choice === 'bucket');
                 delete s3exp_config.ContinuationToken;
@@ -620,7 +602,6 @@ permissions and limitations under the License.
                 (s3exp_lister = s3list(s3exp_config, s3draw)).go();
                 // Else user selected folder then can do a delimiter list
             } else {
-                console.log("Switch to folder");
                 $('#tb-s3objects').DataTable().column(1).visible(false);
                 delete s3exp_config.ContinuationToken;
                 delete s3exp_config.Prefix;
@@ -637,7 +618,6 @@ permissions and limitations under the License.
                 console.log("is folder: " + data);
                 return '<a data-s3="folder" data-prefix="' + htmlEscape(data) + '" href="' + object2hrefvirt(s3exp_config.Bucket, data) + '">' + prefix2folder(data) + '</a>';
             } else {
-                console.log("not folder/this document: " + data);
                 if (s3exp_config.CloudFront) {
                     return '<a data-s3="object" href="' + object2hrefvirt(s3exp_config.CloudFront, data) + '"download="' + fullpath2filename(data) + '">' + fullpath2filename(data) + '</a>';
                 } else {
@@ -692,7 +672,6 @@ permissions and limitations under the License.
 
         // Initialize Cognito and authentication
         function initializeCognito() {
-            console.log('Initializing Cognito authentication...');
             
             // Clear any existing credentials
             AWS.config.credentials = new AWS.CognitoIdentityCredentials({
@@ -755,6 +734,9 @@ permissions and limitations under the License.
 
         $('#tb-s3objects').DataTable().column(s3exp_columns.key).visible(false);
         console.log("jQuery version=" + $.fn.jquery);
+
+        // Initialize Cognito authentication now that all functions are defined
+        initializeCognito();
 
         // Custom sort for the Key column so that folders appear before objects
         $.fn.dataTableExt.oSort['key-asc'] = function(a, b) {

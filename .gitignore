@@ -1,0 +1,11 @@
+# Configuration files with sensitive information
+COGNITO_SETUP.md
+
+# # Local development files
+# *.log
+# .env
+# .env.local
+
+# # OS generated files
+# .DS_Store
+# Thumbs.db
