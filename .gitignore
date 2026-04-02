@@ -1,6 +1,7 @@
 # Configuration files with sensitive information
 COGNITO_SETUP.md
 
+
 # # Local development files
 # *.log
 # .env

@@ -958,6 +958,45 @@ permissions and limitations under the License.
 
             // Do initial bucket list
             (s3exp_lister = s3list(s3exp_config, s3draw)).go();
+        } else if (s3_location) {
+            // Use s3_id.txt for custom domains (e.g., download2.pcamerica.com)
+            console.log("Using s3_id.txt for custom domain");
+            console.log("S3 Location from s3_id.txt: " + s3_location);
+            
+            var s3_url = s3_location.trim();
+            var bucket;
+            
+            // Parse bucket from s3_id.txt (supports multiple formats)
+            if (s3_url.includes('/')) {
+                // Path-style: s3.amazonaws.com/bucketname
+                var pathParts = s3_url.split('/');
+                bucket = pathParts[pathParts.length - 1];
+            } else if (s3_url.includes('.s3.amazonaws.com')) {
+                // Virtual-hosted style: bucketname.s3.amazonaws.com (bucket may contain dots)
+                bucket = s3_url.replace('.s3.amazonaws.com', '');
+            } else if (s3_url.includes('.s3-')) {
+                // Regional virtual-hosted style: bucketname.s3-region.amazonaws.com
+                bucket = s3_url.substring(0, s3_url.indexOf('.s3-'));
+            } else {
+                // Just the bucket name
+                bucket = s3_url;
+            }
+            
+            console.log("Parsed bucket from s3_id.txt: " + bucket);
+            
+            s3 = new AWS.S3();
+            s3exp_config = {
+                Bucket: bucket,
+                Delimiter: '/'
+            };
+            
+            if (window.location.hash) {
+                console.log("Location hash=" + window.location.hash);
+                s3exp_config.Prefix = window.location.hash.substring(1);
+            }
+            
+            // Do initial bucket list
+            (s3exp_lister = s3list(s3exp_config, s3draw)).go();
         } else {
             promptForBucketInput();
         }
