@@ -243,7 +243,14 @@ permissions and limitations under the License.
 
         // CloudFront Support
         if (s3exp_config.CloudFront){
-            strBucket = '.cloudfront.net/'
+            // Check if CloudFront value is a full hostname (custom domain) or just distribution ID
+            if (s3exp_config.CloudFront.includes('.')) {
+                // It's a full hostname like "download2.pcamerica.com" - use it directly
+                return document.location.protocol + '//' + s3exp_config.CloudFront + '/' + enckey;
+            } else {
+                // It's just a CloudFront distribution ID like "drity8imzyop8"
+                strBucket = '.cloudfront.net/'
+            }
         } else {
             if (AWS.config.region === "us-east-1") {
                 strBucket = '.s3.amazonaws.com/';
@@ -423,6 +430,27 @@ permissions and limitations under the License.
                 if (err) {
                     console.log('Error: ' + JSON.stringify(err));
                     console.log('Error: ' + err.stack);
+                    
+                    // If AccessDenied, try refreshing credentials and retry once
+                    if (err.code === 'AccessDenied' && !scope.retried) {
+                        console.log('AccessDenied error - refreshing credentials and retrying...');
+                        scope.retried = true;
+                        $('#bucket-loader').removeClass('fa-spin');
+                        
+                        AWS.config.credentials.refresh(function(refreshErr) {
+                            if (refreshErr) {
+                                console.log('Error refreshing credentials after AccessDenied:', refreshErr);
+                                bootbox.alert({message: 'Access denied. Unable to refresh credentials: ' + refreshErr.message});
+                                return;
+                            }
+                            console.log('Credentials refreshed, retrying S3 request...');
+                            // Retry the request with fresh credentials
+                            $('#bucket-loader').addClass('fa-spin');
+                            s3.listObjectsV2(scope.params, scope.cb);
+                        });
+                        return;
+                    }
+                    
                     scope.stop = true;
                     $('#bucket-loader').removeClass('fa-spin');
                     bootbox.alert({message: translations['bucketError'][currentLang] + scope.params.Bucket +'. Error: ' + err,});
@@ -489,9 +517,14 @@ permissions and limitations under the License.
                 $('#bucket-loader').addClass('fa-spin');
                 $('#tb-s3objects').DataTable().clear();
                 
-                // Ensure we have valid credentials before making S3 call
-                if (!AWS.config.credentials || !AWS.config.credentials.accessKeyId) {
-                    console.log('No valid credentials, refreshing...');
+                // Check if credentials exist and are not expired
+                var needsRefresh = !AWS.config.credentials || 
+                                  !AWS.config.credentials.accessKeyId ||
+                                  !AWS.config.credentials.expireTime ||
+                                  AWS.config.credentials.needsRefresh();
+                
+                if (needsRefresh) {
+                    console.log('Credentials missing or expired, refreshing...');
                     AWS.config.credentials.refresh(function(err) {
                         if (err) {
                             console.log('Error refreshing credentials:', err);
@@ -500,11 +533,13 @@ permissions and limitations under the License.
                             return;
                         }
                         console.log('Credentials refreshed successfully');
+                        console.log('New expiration time:', AWS.config.credentials.expireTime);
                         isAuthenticated = true;
                         s3.listObjectsV2(scope.params, scope.cb);
                     });
                 } else {
-                    console.log('Using existing credentials for S3 call');
+                    console.log('Using existing valid credentials for S3 call');
+                    console.log('Credentials expire at:', AWS.config.credentials.expireTime);
                     s3.listObjectsV2(scope.params, scope.cb);
                 }
             },
@@ -614,13 +649,14 @@ permissions and limitations under the License.
                 return fullpath2filename(data);
             } else if (isfolder(data)) {
                 console.log("is folder: " + data);
-                return '<a data-s3="folder" data-prefix="' + htmlEscape(data) + '" href="' + object2hrefvirt(s3exp_config.Bucket, data) + '">' + prefix2folder(data) + '</a>';
+                // Use CloudFront URL for folders if configured, otherwise use bucket
+                var folderUrl = s3exp_config.CloudFront ? 
+                    object2hrefvirt(s3exp_config.CloudFront, data) : 
+                    object2hrefvirt(s3exp_config.Bucket, data);
+                return '<a data-s3="folder" data-prefix="' + htmlEscape(data) + '" href="' + folderUrl + '">' + prefix2folder(data) + '</a>';
             } else {
-                if (s3exp_config.CloudFront) {
-                    return '<a data-s3="object" href="' + object2hrefvirt(s3exp_config.CloudFront, data) + '"download="' + fullpath2filename(data) + '">' + fullpath2filename(data) + '</a>';
-                } else {
-                    return '<a data-s3="object" href="' + object2hrefvirt(s3exp_config.Bucket, data) + '"download="' + fullpath2filename(data) + '">' + fullpath2filename(data) + '</a>';
-                }
+                // For files, store the key so we can generate a pre-signed URL on demand
+                return '<a data-s3="object" data-key="' + htmlEscape(data) + '" href="#" download="' + fullpath2filename(data) + '">' + fullpath2filename(data) + '</a>';
             }
         }
 
@@ -771,12 +807,54 @@ permissions and limitations under the License.
                 s3exp_config.Prefix = target.dataset.prefix;
                 s3exp_config.Delimiter = $("input[name='optionsdepth']:checked").val() == "folder" ? "/" : "";
                 (s3exp_lister = s3list(s3exp_config, s3draw)).go();
-                // Else user has clicked on an object so download it in new window/tab
-            } else {
-                window.open(target.href, '_blank', 'noopener,noreferrer');
+                // Else user has clicked on an object so download it with a pre-signed URL
+            } else if (target.dataset.s3 === "object") {
+                var key = target.dataset.key;
+                console.log("Generating pre-signed URL for: " + key);
+                
+                // Check if credentials are valid before generating pre-signed URL
+                var needsRefresh = !AWS.config.credentials || 
+                                  !AWS.config.credentials.accessKeyId ||
+                                  !AWS.config.credentials.expireTime ||
+                                  AWS.config.credentials.needsRefresh();
+                
+                if (needsRefresh) {
+                    console.log('Credentials expired, refreshing before download...');
+                    AWS.config.credentials.refresh(function(err) {
+                        if (err) {
+                            console.log('Error refreshing credentials for download:', err);
+                            bootbox.alert({message: 'Unable to download file. Authentication failed: ' + err.message});
+                            return;
+                        }
+                        console.log('Credentials refreshed, generating pre-signed URL...');
+                        generateAndDownload(key, target);
+                    });
+                } else {
+                    generateAndDownload(key, target);
+                }
             }
             return false;
         });
+        
+        // Function to generate pre-signed URL and trigger download
+        function generateAndDownload(key, target) {
+            try {
+                var params = {
+                    Bucket: s3exp_config.Bucket,
+                    Key: key,
+                    Expires: 300 // URL valid for 5 minutes
+                };
+                
+                var url = s3.getSignedUrl('getObject', params);
+                console.log('Pre-signed URL generated successfully');
+                
+                // Open the pre-signed URL in a new tab/window
+                window.open(url, '_blank', 'noopener,noreferrer');
+            } catch (err) {
+                console.log('Error generating pre-signed URL:', err);
+                bootbox.alert({message: 'Unable to download file: ' + err.message});
+            }
+        }
 
         // Document URL typically looks like this for path-style URLs:
         // - https://s3.amazonaws.com/mybucket1/index.html
@@ -960,7 +1038,7 @@ permissions and limitations under the License.
             (s3exp_lister = s3list(s3exp_config, s3draw)).go();
         } else if (s3_location) {
             // Use s3_id.txt for custom domains (e.g., download2.pcamerica.com)
-            console.log("Using s3_id.txt for custom domain");
+            console.log("Using s3_id.txt for custom domain: " + parser.hostname);
             console.log("S3 Location from s3_id.txt: " + s3_location);
             
             var s3_url = s3_location.trim();
@@ -984,11 +1062,19 @@ permissions and limitations under the License.
             
             console.log("Parsed bucket from s3_id.txt: " + bucket);
             
+            // For custom domains, use the full hostname (e.g., download2.pcamerica.com)
+            // NOT just the first part. CloudFront URL will be: https://download2.pcamerica.com/file.zip
+            var cf_host = parser.hostname;
+            console.log("Using custom domain/CloudFront hostname: " + cf_host);
+            
             s3 = new AWS.S3();
             s3exp_config = {
                 Bucket: bucket,
+                CloudFront: cf_host,
                 Delimiter: '/'
             };
+            
+            console.log("Configuration: Bucket=" + bucket + ", CloudFront=" + cf_host);
             
             if (window.location.hash) {
                 console.log("Location hash=" + window.location.hash);
