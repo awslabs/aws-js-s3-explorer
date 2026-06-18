@@ -360,12 +360,7 @@ permissions and limitations under the License.
                         a2.click(function(e) {
                             e.preventDefault();
                             console.log('Breadcrumb click object prefix: ' + saveprefix);
-                            s3exp_config = {
-                                Bucket: data.params.Bucket,
-                                Prefix: saveprefix,
-                                Delimiter: data.params.Delimiter
-                            };
-                            (s3exp_lister = s3list(s3exp_config, s3draw)).go();
+                            window.location.hash = saveprefix;
                         });
                     })();
                 }
@@ -683,17 +678,23 @@ permissions and limitations under the License.
 
             // If the user has clicked on a folder then navigate into that folder
             if (target.dataset.s3 === "folder") {
-                resetDepth();
-                delete s3exp_config.ContinuationToken;
-                s3exp_config.Prefix = target.dataset.prefix;
-                s3exp_config.Delimiter = $("input[name='optionsdepth']:checked").val() == "folder" ? "/" : "";
-                (s3exp_lister = s3list(s3exp_config, s3draw)).go();
+                window.location.hash = target.dataset.prefix
                 // Else user has clicked on an object so download it in new window/tab
             } else {
                 window.open(target.href, '_blank', 'noopener,noreferrer');
             }
             return false;
         });
+
+        $(window).on("popstate", function (e) {
+            resetDepth()
+            delete s3exp_config.ContinuationToken
+      
+            var hash = window.location.hash
+            s3exp_config.Prefix = hash !== "" ? hash.slice(1) : "" // remove #
+            s3exp_config.Delimiter = $("input[name='optionsdepth']:checked").val() == "folder" ? "/" : ""
+            ;(s3exp_lister = s3list(s3exp_config, s3draw)).go()
+        })
 
         // Document URL typically looks like this for path-style URLs:
         // - https://s3.amazonaws.com/mybucket1/index.html
