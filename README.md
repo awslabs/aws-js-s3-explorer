@@ -6,7 +6,7 @@ AWS JavaScript S3 Explorer is a JavaScript application that uses AWS's JavaScrip
 
 The index.html file in this bucket contains the entire application. A visitor to the index.html page is prompted to enter the name of an Amazon S3 bucket. Upon adding the bucket name, the contents of the bucket will be rendered on the page.
 
-**Important**: unless you explicitly want everyone on the internet to be able to read your S3 bucket, you should ensure that your S3 buckets are **not** public. You can read more at [Security Best Practices for Amazon S3](https://docs.aws.amazon.com/AmazonS3/latest/dev/security-best-practices.html).
+**Important**: unless you explicitly want everyone on the internet to be able to read your S3 bucket, you should ensure that your S3 buckets are **not** public. You can read more at [Security Best Practices for Amazon S3](https://docs.aws.amazon.com/AmazonS3/latest/userguide/security-best-practices.html).
 
 ## Screenshots
 
@@ -44,8 +44,8 @@ Using the [AWS Console for S3](https://s3.console.aws.amazon.com/), click your b
       "Effect": "Allow",
       "Principal": "*",
       "Action": [
-        "s3:List*",
-        "s3:Get*"
+        "s3:ListBucket",
+        "s3:GetObject"
       ],
       "Resource": [
         "arn:aws:s3:::BUCKET-NAME",
@@ -56,7 +56,7 @@ Using the [AWS Console for S3](https://s3.console.aws.amazon.com/), click your b
 }
 ```
 
-Note that this policy will allow anyone to list the contents of your bucket and to get any file from within the bucket. It will *not* allow them to upload, modify, or delete files in your bucket.
+Note that this policy will allow anyone to list the contents of your bucket and to get any file from within the bucket. It will *not* allow them to upload, modify, or delete files in your bucket, nor read your bucket's configuration (use the specific `s3:ListBucket` and `s3:GetObject` actions as shown, rather than wildcards like `s3:List*`/`s3:Get*`, which would additionally expose bucket configuration such as the bucket policy, ACLs, and CORS rules).
 
 If you prefer to restrict the set of source IPs that can access the contents of your bucket then you can do this with an additional bucket policy condition on source IP address. Enter the following policy, but replace *BUCKET-NAME* with the name of your bucket and replace *203.0.113.0/24* with the relevant IP CIDR block, then click *Save*:
 
@@ -69,17 +69,17 @@ If you prefer to restrict the set of source IPs that can access the contents of 
       "Effect": "Allow",
       "Principal": "*",
       "Action": [
-        "s3:List*",
-        "s3:Get*"
+        "s3:ListBucket",
+        "s3:GetObject"
       ],
       "Resource": [
         "arn:aws:s3:::BUCKET-NAME",
         "arn:aws:s3:::BUCKET-NAME/*"
       ],
       "Condition": {
-          "IpAddress": {
-              "aws:SourceIp": "203.0.113.0/24"
-          }
+        "IpAddress": {
+            "aws:SourceIp": "203.0.113.0/24"
+        }
       }
     }
   ]
@@ -180,5 +180,34 @@ This application allows visitors to view the contents of a bucket via its folder
 
 ## CloudFront support
 
-You can now run this application with a CloudFront distribution in front of your S3 bucket.  To enable CloudFront support, the application requires a public file called "s3_id.txt" to be in the root of the bucket.  The value of the file must be the full S3 bucketname, such as: "foobucket.s3.amazonaws.com".
+You can now run this application with a CloudFront distribution in front of your S3 bucket.  To enable CloudFront support, the application requires a public file called "s3_id.txt" to be in the root of the bucket.  The value of the file must be the full S3 bucketname, such as: "foobucket.s3.amazonaws.com". Leading and trailing whitespace in the file (for example, a trailing newline) is tolerated and ignored.
 
+## Development
+
+The entire application lives in `index.html`. Linting and formatting are enforced in CI, so run them locally before opening a pull request.
+
+Prerequisites: [Node.js](https://nodejs.org/) 18.18 or later.
+
+```sh
+npm ci               # install the pinned development dependencies
+npm run lint         # ESLint (flat config in eslint.config.mjs)
+npm run lint:fix     # ESLint with auto-fix
+npm run format:check # Prettier check (2-space indentation standard)
+npm run format       # Prettier reformat
+```
+
+A GitHub Actions workflow (`.github/workflows/lint.yml`) runs `npm run format:check` and `npm run lint` on every push to `master` and on every pull request. Both must pass.
+
+### Testing locally
+
+You can serve the application locally for a quick smoke test:
+
+```sh
+python3 -m http.server 8080   # or: npx http-server -p 8080
+```
+
+Then open <http://localhost:8080/index.html>. Note that:
+
+* Because the page is not served from an S3 or CloudFront hostname, bucket/region inference from the URL is skipped and you will be prompted for a bucket name.
+* Requests from a local server to S3 are cross-origin, so the target bucket's CORS configuration must include your local origin (for example `http://localhost:8080`) in `AllowedOrigins`. Adding a localhost origin does not weaken bucket security: CORS only governs what browser JavaScript may read, while actual access remains controlled by your bucket policy.
+* Code paths that depend on the serving hostname (URL inference, the CloudFront integration) can only be fully tested by deploying `index.html` to a bucket or distribution and loading it from there.
