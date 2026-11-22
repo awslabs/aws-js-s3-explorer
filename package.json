@@ -1,0 +1,23 @@
+{
+  "name": "aws-js-s3-explorer",
+  "version": "1.0.0",
+  "description": "AWS JavaScript S3 Explorer",
+  "private": true,
+  "license": "Apache-2.0",
+  "scripts": {
+    "lint": "eslint index.html",
+    "lint:fix": "eslint --fix index.html",
+    "format": "prettier --write index.html eslint.config.mjs",
+    "format:check": "prettier --check index.html eslint.config.mjs"
+  },
+  "engines": {
+    "node": ">=18.18"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10",
+    "eslint": "^10",
+    "eslint-plugin-html": "^8.1.3",
+    "globals": "^17.4.0",
+    "prettier": "^3.10.1"
+  }
+}
