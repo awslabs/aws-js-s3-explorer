@@ -1,0 +1,7 @@
+# Commits listed here are ignored by git blame (and GitHub's blame view).
+#
+# To make local git blame use this file automatically, run once:
+#   git config blame.ignoreRevsFile .git-blame-ignore-revs
+
+# style: apply eslint --fix and Prettier reformat (2-space standard)
+3da8715edac2e60d0b9e5ecb4c520bab0b302434
