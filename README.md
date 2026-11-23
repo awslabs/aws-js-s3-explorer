@@ -198,6 +198,14 @@ npm run format       # Prettier reformat
 
 A GitHub Actions workflow (`.github/workflows/lint.yml`) runs `npm run format:check` and `npm run lint` on every push to `master` and on every pull request. Both must pass.
 
+### Useful git blame
+
+Mechanical reformat commits are listed in `.git-blame-ignore-revs` so that `git blame` attributes lines to the commits that actually changed them. GitHub's blame view uses this file automatically; for local git, run once per clone:
+
+```sh
+git config blame.ignoreRevsFile .git-blame-ignore-revs
+```
+
 ### Testing locally
 
 You can serve the application locally for a quick smoke test:
